@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1011924739423",
+    "project_id": "ecoride-82bb2",
+    "storage_bucket": "ecoride-82bb2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1011924739423:android:2099ad417aac6e0e5a42ea",
+        "android_client_info": {
+          "package_name": "com.example.ecoride"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyALum6VuO2KC31Mvd1IXA1TfuukaaAjiKY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
