@@ -2,14 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/login_viewmodel.dart';
 import '../views/register_screen.dart';
-import '../views/recolector_home_screen.dart';
-import '../views/generador_home_screen.dart';
+import 'recolector_screen.dart';
+import 'generador_screen.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
+  @override
+  _LoginScreenState createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-
-  LoginScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -60,7 +65,6 @@ class LoginScreen extends StatelessWidget {
                                 final userId = await loginViewModel.login(
                                   emailController.text,
                                   passwordController.text,
-                                  context,
                                 );
 
                                 if (userId != null) {

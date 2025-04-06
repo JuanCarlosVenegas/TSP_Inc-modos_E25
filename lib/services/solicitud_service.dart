@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import '../models/residuo_model.dart';
+import '../models/recoleccion_model.dart';
 import 'package:geolocator/geolocator.dart';
 
 class PickupRequestService {
@@ -15,7 +15,7 @@ class PickupRequestService {
     for (int i = 0; i < images.length; i++) {
       try {
         final ref = _storage.ref().child('pickup_images/$requestId/image_$i.jpg');
-        final uploadTask = await ref.putFile(images[i]);
+      //  final uploadTask = await ref.putFile(images[i]);
         final url = await ref.getDownloadURL();
         downloadUrls.add(url);
       } catch (e) {

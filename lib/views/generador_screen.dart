@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import '../viewmodels/generadorH_viewmodel.dart';
+import '../viewmodels/generador_viewmodel.dart';
 import '../widgets/custom_map.dart';
 import '../views/login_screen.dart';
 
 class RequestPickupScreen extends StatelessWidget {
   final String userId;
 
-  const RequestPickupScreen({Key? key, required this.userId}) : super(key: key);
+  const RequestPickupScreen({super.key, required this.userId});
 
   @override
   Widget build(BuildContext context) {

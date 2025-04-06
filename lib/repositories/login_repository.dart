@@ -5,14 +5,12 @@ import 'dart:convert';
 class LoginRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Función para encriptar la contraseña
   String hashPassword(String password) {
     final bytes = utf8.encode(password);
     final digest = sha256.convert(bytes);
     return digest.toString();
   }
 
-  // Función para verificar el inicio de sesión
   Future<bool> loginUser(String email, String password) async {
     try {
       final hashedPassword = hashPassword(password);
@@ -29,7 +27,6 @@ class LoginRepository {
     }
   }
 
-  // Función para obtener datos del usuario, incluyendo el ID
   Future<Map<String, dynamic>?> getUserData(String email) async {
     try {
       final querySnapshot = await _firestore
@@ -40,7 +37,7 @@ class LoginRepository {
       if (querySnapshot.docs.isNotEmpty) {
         final doc = querySnapshot.docs.first;
         final data = doc.data();
-        data['id'] = doc.id; //  Agregamos el ID generado por Firestore
+        data['id'] = doc.id;
         return data;
       }
 

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../views/register_screen.dart';
 import '../repositories/login_repository.dart';
-import '../views/generador_home_screen.dart'; // ✅ Importa la pantalla destino
 
 class LoginViewModel extends ChangeNotifier {
   bool _isLoading = false;
@@ -15,8 +14,7 @@ class LoginViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Intenta iniciar sesión y redirige si es exitoso.
-  Future<String?> login(String email, String password, BuildContext context) async {
+  Future<String?> login(String email, String password) async {
     try {
       setLoading(true);
 
@@ -27,40 +25,20 @@ class LoginViewModel extends ChangeNotifier {
 
         if (userData != null) {
           isCollector = userData['isCollector'] ?? false;
-          final userId = userData['id']; // Firestore user ID
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Inicio de sesión exitoso")),
-          );
-
-          // ✅ Redirige a RequestPickupScreen con el userId
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (_) => RequestPickupScreen(userId: userId),
-            ),
-          );
+          final userId = userData['id'];
 
           return userId;
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("No se encontraron datos del usuario")),
-          );
+          return "No se encontraron datos del usuario";
         }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Correo o contraseña incorrectos")),
-        );
+        return "Correo o contraseña incorrectos";
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error inesperado: ${e.toString()}")),
-      );
+      return "Error inesperado: ${e.toString()}";
     } finally {
       setLoading(false);
     }
-
-    return null;
   }
 
   Future<void> register(BuildContext context) async {

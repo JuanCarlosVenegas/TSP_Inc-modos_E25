@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
-import '../models/residuo_model.dart';
+import '../models/recoleccion_model.dart';
 import '../services/solicitud_service.dart';
 
 class PickupRequestViewModel extends ChangeNotifier {
@@ -37,11 +37,21 @@ class PickupRequestViewModel extends ChangeNotifier {
     if (!_isDisposed && hasListeners) notifyListeners();
   }
 
-  void _initLocation() async {
-    currentPosition = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
-    isLoading = false;
-    _safeNotify();
-  }
+void _initLocation() async {
+  // Usando LocationSettings para reemplazar el parámetro deprecated
+  LocationSettings locationSettings = LocationSettings(
+    accuracy: LocationAccuracy.high,
+    distanceFilter: 10, // puedes ajustar esto según tus necesidades
+  );
+
+  currentPosition = await Geolocator.getCurrentPosition(
+    locationSettings: locationSettings,
+  );
+  
+  isLoading = false;
+  _safeNotify();
+}
+
 
   void toggleWasteForm(bool show) {
     showWasteForm = show;
