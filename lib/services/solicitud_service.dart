@@ -10,22 +10,27 @@ class PickupRequestService {
 
   /// Sube imágenes y devuelve sus URLs
   Future<List<String>> uploadImages(String requestId, List<File> images) async {
-    List<String> downloadUrls = [];
+  List<String> downloadUrls = [];
 
-    for (int i = 0; i < images.length; i++) {
-      try {
-        final ref = _storage.ref().child('pickup_images/$requestId/image_$i.jpg');
-      //  final uploadTask = await ref.putFile(images[i]);
-        final url = await ref.getDownloadURL();
-        downloadUrls.add(url);
-      } catch (e) {
-        print('Error al subir imagen $i: $e');
-        rethrow;
-      }
+  for (int i = 0; i < images.length; i++) {
+    try {
+      final ref = _storage.ref().child('pickup_images/$requestId/image_$i.jpg');
+
+      // Subimos la imagen al Storage
+      final uploadTask = await ref.putFile(images[i]);
+
+      // Esperamos a que se complete y luego obtenemos la URL
+      final url = await uploadTask.ref.getDownloadURL();
+      downloadUrls.add(url);
+    } catch (e) {
+      print('Error al subir imagen $i: $e');
+      rethrow;
     }
-
-    return downloadUrls;
   }
+
+  return downloadUrls;
+}
+
 
   Future<void> updateRequestStatus(String requestId, String newStatus) async {
     await _firestore

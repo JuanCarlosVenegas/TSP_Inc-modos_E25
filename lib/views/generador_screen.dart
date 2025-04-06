@@ -5,7 +5,6 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../viewmodels/generador_viewmodel.dart';
 import '../widgets/custom_map.dart';
 import '../views/login_screen.dart';
-import '../widgets/FormatoDinero.dart';
 import 'package:flutter_multi_formatter/flutter_multi_formatter.dart';
 
 
