@@ -7,6 +7,7 @@ import '../views/generador_screen.dart';
 class LoginViewModel extends ChangeNotifier {
   bool _isLoading = false;
   bool get isLoading => _isLoading;
+  String? _userId;
 
   final LoginRepository _repository = LoginRepository();
   bool isCollector = false;
@@ -27,9 +28,9 @@ class LoginViewModel extends ChangeNotifier {
 
         if (userData != null) {
           isCollector = userData['isCollector'] ?? false;
-          final userId = userData['id'];
+          _userId = userData['id']; // Guardamos el userId aquí
 
-          return userId;
+          return null; // Login exitoso, no hay mensaje de error
         } else {
           return "No se encontraron datos del usuario";
         }
@@ -50,16 +51,20 @@ class LoginViewModel extends ChangeNotifier {
     );
   }
 
-  void navigateToAppropriateScreen(BuildContext context, String? userId, bool isCollector) {
-    if (userId != null) {
+  void navigateToAppropriateScreen(BuildContext context, bool isCollector) {
+    if (_userId != null) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (context) => isCollector
               ? const PendingRequestsScreen()
-              : RequestPickupScreen(userId: userId),
-        ),
+              : RequestPickupScreen(userId: _userId!),
+        )
       );
     }
+  }
+
+  String? getUserId() {
+    return _userId;
   }
 }

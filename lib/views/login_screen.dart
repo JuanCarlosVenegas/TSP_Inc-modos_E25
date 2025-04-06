@@ -1,7 +1,14 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart'; 
 import 'package:provider/provider.dart';
 import '../viewmodels/login_viewmodel.dart';
 import '../views/register_screen.dart';
+
+import 'package:flutter/material.dart'; 
+import 'package:provider/provider.dart';
+import '../viewmodels/login_viewmodel.dart';
+import '../views/register_screen.dart';
+import '../views/recolector_screen.dart';
+import '../views/generador_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -60,16 +67,23 @@ class _LoginScreenState extends State<LoginScreen> {
                           : ElevatedButton(
                               style: _buttonStyle(),
                               onPressed: () async {
-                                final userId = await loginViewModel.login(
+                                final loginMessage = await loginViewModel.login(
                                   emailController.text,
                                   passwordController.text,
                                 );
 
-                                if (userId != null) {
-
-                                  // Llamar a la función dentro de tu código
-                                  loginViewModel.navigateToAppropriateScreen(context, userId, loginViewModel.isCollector);
-
+                                if (loginMessage == null) {
+                                  // Si el login es exitoso, navega a la pantalla correspondiente
+                                  loginViewModel.navigateToAppropriateScreen(
+                                    context,
+                                    loginViewModel.isCollector,
+                                    
+                                  );
+                                } else {
+                                  // Si hay un error, se muestra el mensaje
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text(loginMessage)),
+                                  );
                                 }
                               },
                               child: const Text("INICIAR SESIÓN", style: TextStyle(color: Colors.white)),
