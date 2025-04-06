@@ -45,6 +45,7 @@ dependencies:
   geolocator: ^13.0.4     
   location: ^8.0.0       
   uuid: ^4.5.1  
+  geocoding: 
 
 dev_dependencies:
   flutter_test:

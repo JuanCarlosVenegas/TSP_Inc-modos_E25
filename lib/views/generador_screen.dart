@@ -92,7 +92,14 @@ class RequestPickupScreen extends StatelessWidget {
       children: [
         const Text("Solicitar recolección", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         const SizedBox(height: 10),
-        TextField(controller: vm.locationController, decoration: _inputDecoration("Tu ubicación")),
+        TextField(
+          controller: vm.locationController,
+          decoration: _inputDecoration("Tu ubicación"),
+          focusNode: vm.locationFocusNode,
+          onSubmitted: (value) {
+            vm.updatePositionFromAddress(value);
+          },
+        ),
         const SizedBox(height: 10),
         Row(
           children: [

@@ -6,17 +6,33 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/recoleccion_model.dart';
 import '../services/solicitud_service.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-
+import 'package:geocoding/geocoding.dart';
 
 class PickupRequestViewModel extends ChangeNotifier {
   final String userId;
   final PickupRequestService _service = PickupRequestService();
 
   bool _isDisposed = false;
+  final locationFocusNode = FocusNode();
 
   PickupRequestViewModel({required this.userId}) {
     _initLocation();
+
+    // Escuchar cuando el campo pierde el foco
+    locationFocusNode.addListener(() {
+      if (!locationFocusNode.hasFocus) {
+        updatePositionFromAddress(locationController.text);
+      }
+    });
   }
+
+  // No olvides llamar a dispose para liberar recursos
+  // @override
+  // void dispose() {
+  //   locationFocusNode.dispose();
+  //   locationController.dispose();
+  //   super.dispose();
+  // }
 
   final locationController = TextEditingController();
   final timeController = TextEditingController();
@@ -40,19 +56,49 @@ class PickupRequestViewModel extends ChangeNotifier {
     if (!_isDisposed && hasListeners) notifyListeners();
   }
 
-  void _initLocation() async {
-    LocationSettings locationSettings = LocationSettings(
-      accuracy: LocationAccuracy.high,
-      distanceFilter: 10, 
-    );
+  Future<void> _initLocation() async {
+    try {
+      // Configuramos los ajustes de localización
+      LocationSettings locationSettings = LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 10,
+      );
 
-    currentPosition = await Geolocator.getCurrentPosition(
-      locationSettings: locationSettings,
-    );
+      // Intentamos obtener la posición actual del usuario
+      currentPosition = await Geolocator.getCurrentPosition(
+        locationSettings: locationSettings,
+      );
 
+      // Si obtenemos la posición correctamente, actualizamos la dirección
+      await updateAddressFromPosition(currentPosition!);
+    } catch (e) {
+      // Si no se puede obtener la posición, manejamos el error
+      debugPrint("Error al obtener la localización: $e");
+
+      /// Asignamos una ubicación predeterminada (Zacatecas)
+      currentPosition = Position(
+        latitude: 22.7733, // Latitud de Zacatecas
+        longitude: -102.5837, // Longitud de Zacatecas
+        timestamp: DateTime.now(),
+        accuracy: 1.0,
+        altitude: 0.0,
+        altitudeAccuracy: 1.0,
+        heading: 0.0,
+        headingAccuracy: 1.0,
+        speed: 0.0,
+        speedAccuracy: 1.0,
+      );
+
+
+      // Actualizamos la dirección de la ubicación predeterminada
+      await updateAddressFromPosition(currentPosition!);
+    }
+
+    // Cuando la ubicación está lista (ya sea actual o predeterminada), dejamos de cargar y notificamos
     isLoading = false;
     _safeNotify();
   }
+
 
   void toggleWasteForm(bool show) {
     showWasteForm = show;
@@ -143,25 +189,70 @@ class PickupRequestViewModel extends ChangeNotifier {
     timeController.dispose();
     amountController.dispose();
     quantityController.dispose();
+    locationFocusNode.dispose();
     super.dispose();
   }
 
   // Función que actualiza la ubicación cuando se toca en el mapa
   void updateLocation(LatLng latLng) {
-  currentPosition = Position(
-    latitude: latLng.latitude,
-    longitude: latLng.longitude,
-    timestamp: DateTime.now(),
-    accuracy: 0, // O usa el valor de precisión si lo tienes
-    altitude: 0, // Asumiendo que no tienes datos de altitud
-    altitudeAccuracy: 0, // Valor por defecto si no tienes datos
-    heading: 0, // Valor por defecto si no tienes datos de orientación
-    headingAccuracy: 0, // Valor por defecto si no tienes datos de precisión de orientación
-    speed: 0, // O usa la velocidad actual si tienes datos
-    speedAccuracy: 0, // O usa precisión de velocidad si tienes datos
-  );
-  notifyListeners();
-}
+    currentPosition = Position(
+      latitude: latLng.latitude,
+      longitude: latLng.longitude,
+      timestamp: DateTime.now(),
+      accuracy: 0, // O usa el valor de precisión si lo tienes
+      altitude: 0, // Asumiendo que no tienes datos de altitud
+      altitudeAccuracy: 0, // Valor por defecto si no tienes datos
+      heading: 0, // Valor por defecto si no tienes datos de orientación
+      headingAccuracy: 0, // Valor por defecto si no tienes datos de precisión de orientación
+      speed: 0, // O usa la velocidad actual si tienes datos
+      speedAccuracy: 0, // O usa precisión de velocidad si tienes datos
+    );
+    notifyListeners();
+    updateAddressFromPosition(currentPosition!);
+  }
+  Future<void> updateAddressFromPosition(Position position) async {
+    try {
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+      if (placemarks.isNotEmpty) {
+        final place = placemarks.first;
+        final address = '${place.street}, ${place.locality}, ${place.country}';
+        locationController.text = address;
+      }
+    } catch (e) {
+      debugPrint("Error al obtener dirección: $e");
+      locationController.text = 'Dirección no disponible';
+    }
+  }
+
+  Future<void> updatePositionFromAddress(String address) async {
+    try {
+      List<Location> locations = await locationFromAddress(address);
+      if (locations.isNotEmpty) {
+        final loc = locations.first;
+        final newPosition = Position(
+          latitude: loc.latitude,
+          longitude: loc.longitude,
+          timestamp: DateTime.now(),
+          accuracy: 1.0,
+          altitude: 0.0,
+          altitudeAccuracy: 1.0,
+          heading: 0.0,
+          headingAccuracy: 1.0,
+          speed: 0.0,
+          speedAccuracy: 1.0,
+        );
+
+        currentPosition = newPosition;
+        locationController.text = address;
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint("Error al convertir dirección a coordenadas: $e");
+    }
+  }
 
 
   // Función para cerrar sesión

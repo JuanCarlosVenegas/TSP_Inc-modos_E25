@@ -16,13 +16,14 @@ class MapWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GoogleMap(
+    //  key: ValueKey("${position.latitude},${position.longitude}"), // fuerza reconstrucción si cambia posición
       initialCameraPosition: CameraPosition(
         target: position,
         zoom: 15,
       ),
       onMapCreated: onMapCreated,
       onTap: (LatLng latLng) {
-        onMapTapped(latLng); // Llamamos a onMapTapped cuando se toca el mapa
+        onMapTapped(latLng);
       },
       markers: {
         Marker(
