@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
@@ -56,19 +57,10 @@ class PendingRequestsViewModel extends ChangeNotifier {
     _mapController?.moveCamera(CameraUpdate.zoomOut());
   }
 
-  LatLng _parseLocation(String locationString) {
-    try {
-      final parts = locationString.split(',');
-      if (parts.length < 2) throw FormatException("Ubicación incompleta");
-      final lat = double.parse(parts[0]);
-      final lng = double.parse(parts[1]);
-      return LatLng(lat, lng);
-    } catch (e) {
-      debugPrint('Error al parsear ubicación "$locationString": $e');
-      // Posición por defecto: Ciudad de México
-      return const LatLng(19.4326, -99.1332);
-    }
+  LatLng _parseLocation(GeoPoint geoPoint) {
+    return LatLng(geoPoint.latitude, geoPoint.longitude);
   }
+
 
   void logout(BuildContext context) {
     Navigator.pushReplacement(

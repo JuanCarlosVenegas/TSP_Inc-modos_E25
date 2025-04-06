@@ -3,13 +3,6 @@ import 'package:provider/provider.dart';
 import '../viewmodels/login_viewmodel.dart';
 import '../views/register_screen.dart';
 
-import 'package:flutter/material.dart'; 
-import 'package:provider/provider.dart';
-import '../viewmodels/login_viewmodel.dart';
-import '../views/register_screen.dart';
-import '../views/recolector_screen.dart';
-import '../views/generador_screen.dart';
-
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -77,7 +70,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   loginViewModel.navigateToAppropriateScreen(
                                     context,
                                     loginViewModel.isCollector,
-                                    
+
                                   );
                                 } else {
                                   // Si hay un error, se muestra el mensaje

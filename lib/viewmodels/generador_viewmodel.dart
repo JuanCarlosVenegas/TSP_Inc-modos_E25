@@ -2,8 +2,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/recoleccion_model.dart';
 import '../services/solicitud_service.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+
 
 class PickupRequestViewModel extends ChangeNotifier {
   final String userId;
@@ -37,21 +40,19 @@ class PickupRequestViewModel extends ChangeNotifier {
     if (!_isDisposed && hasListeners) notifyListeners();
   }
 
-void _initLocation() async {
-  // Usando LocationSettings para reemplazar el parámetro deprecated
-  LocationSettings locationSettings = LocationSettings(
-    accuracy: LocationAccuracy.high,
-    distanceFilter: 10, // puedes ajustar esto según tus necesidades
-  );
+  void _initLocation() async {
+    LocationSettings locationSettings = LocationSettings(
+      accuracy: LocationAccuracy.high,
+      distanceFilter: 10, 
+    );
 
-  currentPosition = await Geolocator.getCurrentPosition(
-    locationSettings: locationSettings,
-  );
-  
-  isLoading = false;
-  _safeNotify();
-}
+    currentPosition = await Geolocator.getCurrentPosition(
+      locationSettings: locationSettings,
+    );
 
+    isLoading = false;
+    _safeNotify();
+  }
 
   void toggleWasteForm(bool show) {
     showWasteForm = show;
@@ -88,90 +89,84 @@ void _initLocation() async {
       case 1: return "Pequeño";
       case 2: return "Mediano";
       case 3: return "Grande";
-      default: return "";
+      default: return "Desconocido";
     }
   }
 
   Future<void> pickImage() async {
-    if (selectedImages.length >= 3 || _isPickingImage) return;
-
+    if (_isPickingImage) return;
     _isPickingImage = true;
-    try {
-      final picker = ImagePicker();
-      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    final picker = ImagePicker();
+    final XFile? file = await picker.pickImage(source: ImageSource.gallery);
 
-      if (pickedFile != null) {
-        final file = File(pickedFile.path);
-        if (await file.exists()) {
-          selectedImages.add(file);
-          _safeNotify();
-        } else {
-          print("El archivo seleccionado no existe en la ruta: ${pickedFile.path}");
-        }
-      }
-    } catch (e) {
-      print("Error al seleccionar imagen: $e");
-    } finally {
-      _isPickingImage = false;
-    }
-  }
-
-  void removeImage(int index) {
-    if (index >= 0 && index < selectedImages.length) {
-      selectedImages.removeAt(index);
+    if (file != null) {
+      selectedImages.add(File(file.path));
       _safeNotify();
     }
+    _isPickingImage = false;
   }
 
   Future<void> confirmRequest() async {
     if (currentPosition == null) return;
 
+    // Crear una solicitud con los valores actuales
     final request = PickupRequest(
-      requestId: '',
+      requestId: '',  // Se genera automáticamente en el servicio
       userId: userId,
-      location: locationController.text,
+      location: GeoPoint(currentPosition!.latitude, currentPosition!.longitude), // GeoPoint con las coordenadas
       time: timeController.text,
       amount: amountController.text,
       wasteType: selectedWasteType,
       quantity: quantity,
-      size: sizeLabel,
-      status: 'pendiente',
-      createdAt: DateTime.now(),
-      collectorId: null,
-      imageUrls: [],
+      size: sizeLabel, // Usa el método sizeLabel para obtener el nombre del tamaño
+      status: 'pendiente', // El estado inicial es 'pendiente'
+      createdAt: DateTime.now(), // Usar la fecha y hora actual
+      collectorId: null, // Aún no asignado
+      imageUrls: [], // Las imágenes serán manejadas por el servicio
     );
 
+    // Llamar al servicio para guardar la solicitud en Firestore
     try {
       await _service.saveRequest(request, selectedImages, currentPosition!);
-      _clearForm();
-      _safeNotify();
+      // Puedes agregar alguna lógica para manejar el estado de éxito, como un mensaje o actualización de UI
     } catch (e) {
-      print("Error al confirmar solicitud: $e");
+      print("Error al confirmar la solicitud: $e");
+      // Aquí podrías agregar una lógica de manejo de errores para mostrar al usuario si algo falla
     }
   }
 
-  void _clearForm() {
-    locationController.clear();
-    timeController.clear();
-    amountController.clear();
-    quantity = 1;
-    quantityController.text = "1";
-    selectedWasteType = 'General';
-    size = 1;
-    sizeValue = 1.0;
-    selectedImages.clear();
-    showWasteForm = false;
-  }
-
-  void logout() {}
 
   @override
   void dispose() {
+    _isDisposed = true;
     locationController.dispose();
     timeController.dispose();
     amountController.dispose();
     quantityController.dispose();
-    _isDisposed = true;
     super.dispose();
+  }
+
+  // Función que actualiza la ubicación cuando se toca en el mapa
+  void updateLocation(LatLng latLng) {
+  currentPosition = Position(
+    latitude: latLng.latitude,
+    longitude: latLng.longitude,
+    timestamp: DateTime.now(),
+    accuracy: 0, // O usa el valor de precisión si lo tienes
+    altitude: 0, // Asumiendo que no tienes datos de altitud
+    altitudeAccuracy: 0, // Valor por defecto si no tienes datos
+    heading: 0, // Valor por defecto si no tienes datos de orientación
+    headingAccuracy: 0, // Valor por defecto si no tienes datos de precisión de orientación
+    speed: 0, // O usa la velocidad actual si tienes datos
+    speedAccuracy: 0, // O usa precisión de velocidad si tienes datos
+  );
+  notifyListeners();
+}
+
+
+  // Función para cerrar sesión
+  void logout() {
+    // Lógica para cerrar sesión, tal vez borrando datos locales o similar
+    // No olvides llamar a notifyListeners() si necesitas actualizar la UI
   }
 }

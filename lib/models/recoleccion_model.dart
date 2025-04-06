@@ -1,7 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class PickupRequest {
   final String requestId;
   final String userId;
-  final String location;
+  final GeoPoint location;
   final String time;
   final String amount;
   final String wasteType;
@@ -31,7 +33,7 @@ class PickupRequest {
     return {
       'requestId': requestId,
       'userId': userId,
-      'location': location,
+      'location': location,  // Se guarda como GeoPoint
       'time': time,
       'amount': amount,
       'wasteType': wasteType,
@@ -48,7 +50,9 @@ class PickupRequest {
     return PickupRequest(
       requestId: json['requestId'],
       userId: json['userId'],
-      location: json['location'],
+      location: json['location'] is GeoPoint
+          ? json['location']
+          : GeoPoint(0, 0),  // Si la ubicación no es GeoPoint, asigna un GeoPoint vacío
       time: json['time'],
       amount: json['amount'],
       wasteType: json['wasteType'],
@@ -64,7 +68,7 @@ class PickupRequest {
   PickupRequest copyWith({
     String? requestId,
     String? userId,
-    String? location,
+    GeoPoint? location,  // Cambiado de String a GeoPoint
     String? time,
     String? amount,
     String? wasteType,

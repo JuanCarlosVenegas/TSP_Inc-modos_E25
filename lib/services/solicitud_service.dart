@@ -39,10 +39,13 @@ class PickupRequestService {
     final requestId = _firestore.collection('pickup_requests').doc().id;
     final imageUrls = await uploadImages(requestId, images);
 
+    // Usamos GeoPoint para almacenar la ubicación en Firestore
+    final geoPoint = GeoPoint(position.latitude, position.longitude);
+
     final updatedRequest = request.copyWith(
       requestId: requestId,
       imageUrls: imageUrls,
-      location: '${position.latitude},${position.longitude}',
+      location: geoPoint,  // Cambiado de String a GeoPoint
     );
 
     await _firestore

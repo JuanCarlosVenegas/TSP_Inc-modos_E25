@@ -39,6 +39,9 @@ class RequestPickupScreen extends StatelessWidget {
                             vm.currentPosition!.longitude,
                           ),
                           onMapCreated: (_) {},
+                          onMapTapped: (LatLng latLng) {
+                            vm.updateLocation(latLng);
+                          },
                         ),
                 ),
                 Expanded(
@@ -181,7 +184,6 @@ class RequestPickupScreen extends StatelessWidget {
         ),
         Center(child: Text("Tamaño seleccionado: ${vm.sizeLabel}")),
         const SizedBox(height: 16),
-
         ElevatedButton.icon(
           onPressed: vm.selectedImages.length >= 3 ? null : vm.pickImage,
           icon: const Icon(Icons.upload_file),
@@ -191,7 +193,6 @@ class RequestPickupScreen extends StatelessWidget {
             foregroundColor: Colors.black,
           ),
         ),
-
         if (vm.selectedImages.isNotEmpty) ...[
           const SizedBox(height: 10),
           Wrap(
@@ -204,7 +205,6 @@ class RequestPickupScreen extends StatelessWidget {
                 .toList(),
           ),
         ],
-
         const SizedBox(height: 10),
         ElevatedButton(
           onPressed: () => vm.toggleWasteForm(false),
