@@ -7,7 +7,7 @@ class PickupRequest {
   final String wasteType;
   final int quantity;
   final String size;
-  final String status;
+  String status;
   final DateTime createdAt;
   final String? collectorId;
   final List<String> imageUrls;
@@ -61,7 +61,6 @@ class PickupRequest {
     );
   }
 
-  /// ✅ Método `copyWith` para hacer una copia modificando campos opcionalmente
   PickupRequest copyWith({
     String? requestId,
     String? userId,

@@ -31,6 +31,8 @@ class PickupRequestViewModel extends ChangeNotifier {
   Position? currentPosition;
   final List<File> selectedImages = [];
 
+  bool _isPickingImage = false;
+
   void _safeNotify() {
     if (!_isDisposed && hasListeners) notifyListeners();
   }
@@ -81,21 +83,28 @@ class PickupRequestViewModel extends ChangeNotifier {
   }
 
   Future<void> pickImage() async {
-  if (selectedImages.length >= 3) return;
+    if (selectedImages.length >= 3 || _isPickingImage) return;
 
-  final picker = ImagePicker();
-  final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    _isPickingImage = true;
+    try {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
 
-  if (pickedFile != null) {
-    final file = File(pickedFile.path);
-    if (await file.exists()) {
-      selectedImages.add(file);
-      _safeNotify();
-    } else {
-      print("El archivo seleccionado no existe en la ruta: ${pickedFile.path}");
+      if (pickedFile != null) {
+        final file = File(pickedFile.path);
+        if (await file.exists()) {
+          selectedImages.add(file);
+          _safeNotify();
+        } else {
+          print("El archivo seleccionado no existe en la ruta: ${pickedFile.path}");
+        }
+      }
+    } catch (e) {
+      print("Error al seleccionar imagen: $e");
+    } finally {
+      _isPickingImage = false;
     }
   }
-}
 
   void removeImage(int index) {
     if (index >= 0 && index < selectedImages.length) {
@@ -105,34 +114,31 @@ class PickupRequestViewModel extends ChangeNotifier {
   }
 
   Future<void> confirmRequest() async {
-  if (currentPosition == null) return;
+    if (currentPosition == null) return;
 
-  final request = PickupRequest(
-    requestId: '',
-    userId: userId,
-    location: locationController.text,
-    time: timeController.text,
-    amount: amountController.text,
-    wasteType: selectedWasteType,
-    quantity: quantity,
-    size: sizeLabel,
-    status: 'pendiente',
-    createdAt: DateTime.now(),
-    collectorId: null,
-    imageUrls: [],
-  );
+    final request = PickupRequest(
+      requestId: '',
+      userId: userId,
+      location: locationController.text,
+      time: timeController.text,
+      amount: amountController.text,
+      wasteType: selectedWasteType,
+      quantity: quantity,
+      size: sizeLabel,
+      status: 'pendiente',
+      createdAt: DateTime.now(),
+      collectorId: null,
+      imageUrls: [],
+    );
 
-  try {
-    await _service.saveRequest(request, selectedImages, currentPosition!);
-    _clearForm();
-    _safeNotify();
-  } catch (e) {
-    print("Error al confirmar solicitud: $e");
-    // Opcional: puedes mostrar un snackbar o dialog:
-    // ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al subir: $e')));
+    try {
+      await _service.saveRequest(request, selectedImages, currentPosition!);
+      _clearForm();
+      _safeNotify();
+    } catch (e) {
+      print("Error al confirmar solicitud: $e");
+    }
   }
-}
-
 
   void _clearForm() {
     locationController.clear();

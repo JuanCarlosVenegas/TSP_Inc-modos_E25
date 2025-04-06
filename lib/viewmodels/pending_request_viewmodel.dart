@@ -76,4 +76,15 @@ class PendingRequestsViewModel extends ChangeNotifier {
       MaterialPageRoute(builder: (context) => LoginScreen()),
     );
   }
+
+  Future<void> acceptRequest(PickupRequest request) async {
+    try {
+      await _service.updateRequestStatus(request.requestId, 'en recolección');
+      request.status = 'en recolección';
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error al aceptar solicitud: $e');
+    }
+  }
+
 }
