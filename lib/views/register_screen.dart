@@ -64,6 +64,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  // Icono de usuario arriba de los campos de texto
+                  Icon(
+                    Icons.account_circle,
+                    size: 150, // Tamaño del icono
+                    color: Colors.white,
+                  ),
+                  SizedBox(height: 20), // Espacio entre el icono y los campos de texto
+                  
                   TextField(
                     controller: nameController,
                     decoration: InputDecoration(
@@ -71,6 +79,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       labelStyle: TextStyle(color: Colors.white),
                       filled: true,
                       fillColor: Colors.green.shade700,
+                      prefixIcon: Icon(Icons.person, color: Colors.white), // Icono en el campo
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                         borderSide: BorderSide.none,
@@ -86,6 +95,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       labelStyle: TextStyle(color: Colors.white),
                       filled: true,
                       fillColor: Colors.green.shade700,
+                      prefixIcon: Icon(Icons.email, color: Colors.white), // Icono en el campo
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                         borderSide: BorderSide.none,
@@ -101,6 +111,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       labelStyle: TextStyle(color: Colors.white),
                       filled: true,
                       fillColor: Colors.green.shade700,
+                      prefixIcon: Icon(Icons.lock, color: Colors.white), // Icono en el campo
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                         borderSide: BorderSide.none,

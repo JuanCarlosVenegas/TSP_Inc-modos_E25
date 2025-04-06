@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../views/register_screen.dart';
 import '../repositories/login_repository.dart';
+import '../views/recolector_screen.dart';
+import '../views/generador_screen.dart';
 
 class LoginViewModel extends ChangeNotifier {
   bool _isLoading = false;
@@ -46,5 +48,18 @@ class LoginViewModel extends ChangeNotifier {
       context,
       MaterialPageRoute(builder: (context) => RegisterScreen()),
     );
+  }
+
+  void navigateToAppropriateScreen(BuildContext context, String? userId, bool isCollector) {
+    if (userId != null) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => isCollector
+              ? const PendingRequestsScreen()
+              : RequestPickupScreen(userId: userId),
+        ),
+      );
+    }
   }
 }

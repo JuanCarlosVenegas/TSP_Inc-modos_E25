@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/login_viewmodel.dart';
 import '../views/register_screen.dart';
-import 'recolector_screen.dart';
-import 'generador_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -68,16 +66,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                 );
 
                                 if (userId != null) {
-                                  final isCollector = loginViewModel.isCollector;
 
-                                  Navigator.pushReplacement(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => isCollector
-                                          ? const PendingRequestsScreen()
-                                          : RequestPickupScreen(userId: userId),
-                                    ),
-                                  );
+                                  // Llamar a la función dentro de tu código
+                                  loginViewModel.navigateToAppropriateScreen(context, userId, loginViewModel.isCollector);
+
                                 }
                               },
                               child: const Text("INICIAR SESIÓN", style: TextStyle(color: Colors.white)),
