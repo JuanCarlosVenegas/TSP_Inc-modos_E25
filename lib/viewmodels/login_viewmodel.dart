@@ -1,65 +1,55 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'dart:convert';
-import 'package:crypto/crypto.dart';
 import '../views/register_screen.dart';
-import '../views/recolector_home_screen.dart';
-import '../views/generador_home_screen.dart';
+import '../repositories/login_repository.dart';
+import '../views/generador_home_screen.dart'; // ✅ Importa la pantalla destino
 
 class LoginViewModel extends ChangeNotifier {
   bool _isLoading = false;
   bool get isLoading => _isLoading;
+
+  final LoginRepository _repository = LoginRepository();
+  bool isCollector = false;
 
   void setLoading(bool value) {
     _isLoading = value;
     notifyListeners();
   }
 
-  String hashPassword(String password) {
-    final bytes = utf8.encode(password);
-    final digest = sha256.convert(bytes);
-    return digest.toString();
-  }
-
-  Future<void> login(String email, String password, BuildContext context) async {
+  /// Intenta iniciar sesión y redirige si es exitoso.
+  Future<String?> login(String email, String password, BuildContext context) async {
     try {
       setLoading(true);
 
-      final hashedPassword = hashPassword(password);
+      final isLoggedIn = await _repository.loginUser(email, password);
 
-      // Buscar usuario por email y contraseña encriptada
-      final querySnapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .where('email', isEqualTo: email)
-          .where('password', isEqualTo: hashedPassword)
-          .get();
+      if (isLoggedIn) {
+        final userData = await _repository.getUserData(email);
 
-      if (querySnapshot.docs.isNotEmpty) {
-        // Usuario válido
-        final userData = querySnapshot.docs.first.data();
-        final isCollector = userData['isCollector'] ?? false;
+        if (userData != null) {
+          isCollector = userData['isCollector'] ?? false;
+          final userId = userData['id']; // Firestore user ID
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Inicio de sesión exitoso")),
-        );
-
-        // Aquí puedes navegar a otra pantalla dependiendo del tipo de usuario
-        if (isCollector) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => RequestPickupScreen()),
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Inicio de sesión exitoso")),
           );
-        } else {
+
+          // ✅ Redirige a RequestPickupScreen con el userId
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => EnConstruccionWidget()),
+            MaterialPageRoute(
+              builder: (_) => RequestPickupScreen(userId: userId),
+            ),
+          );
+
+          return userId;
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("No se encontraron datos del usuario")),
           );
         }
-
       } else {
-        // Usuario no encontrado
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Correo o contraseña incorrectos")),
+          const SnackBar(content: Text("Correo o contraseña incorrectos")),
         );
       }
     } catch (e) {
@@ -69,6 +59,8 @@ class LoginViewModel extends ChangeNotifier {
     } finally {
       setLoading(false);
     }
+
+    return null;
   }
 
   Future<void> register(BuildContext context) async {

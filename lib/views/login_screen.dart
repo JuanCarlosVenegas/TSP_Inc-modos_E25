@@ -1,6 +1,9 @@
-import 'package:flutter/material.dart'; 
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/login_viewmodel.dart';
+import '../views/register_screen.dart';
+import '../views/recolector_home_screen.dart';
+import '../views/generador_home_screen.dart';
 
 class LoginScreen extends StatelessWidget {
   final TextEditingController emailController = TextEditingController();
@@ -11,7 +14,7 @@ class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (context) => LoginViewModel(), // Aquí se crea el LoginViewModel local
+      create: (context) => LoginViewModel(),
       child: Scaffold(
         body: Container(
           decoration: BoxDecoration(
@@ -35,85 +38,65 @@ class LoginScreen extends StatelessWidget {
                       fit: BoxFit.cover,
                     ),
                   ),
-                  SizedBox(height: 20),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.green.shade700,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    padding: EdgeInsets.symmetric(horizontal: 10),
-                    child: TextField(
-                      controller: emailController,
-                      decoration: InputDecoration(
-                        labelText: 'Correo electrónico',
-                        border: InputBorder.none,
-                        labelStyle: TextStyle(color: Colors.white),
-                      ),
-                      style: TextStyle(color: Colors.white),
-                    ),
+                  const SizedBox(height: 20),
+                  _buildTextField(
+                    controller: emailController,
+                    label: 'Correo electrónico',
                   ),
-                  SizedBox(height: 10),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.green.shade700,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    padding: EdgeInsets.symmetric(horizontal: 10),
-                    child: TextField(
-                      controller: passwordController,
-                      decoration: InputDecoration(
-                        labelText: 'Contraseña',
-                        border: InputBorder.none,
-                        labelStyle: TextStyle(color: Colors.white),
-                      ),
-                      style: TextStyle(color: Colors.white),
-                      obscureText: true,
-                    ),
+                  const SizedBox(height: 10),
+                  _buildTextField(
+                    controller: passwordController,
+                    label: 'Contraseña',
+                    obscureText: true,
                   ),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   Consumer<LoginViewModel>(
                     builder: (context, loginViewModel, child) {
                       return loginViewModel.isLoading
-                          ? CircularProgressIndicator()
+                          ? const CircularProgressIndicator()
                           : ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color.fromARGB(255, 33, 121, 39),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                padding: EdgeInsets.symmetric(vertical: 15, horizontal: 40),
-                              ),
-                              onPressed: () {
-                                loginViewModel.login(
-                                  emailController.text, 
-                                  passwordController.text, 
-                                  context
+                              style: _buttonStyle(),
+                              onPressed: () async {
+                                final userId = await loginViewModel.login(
+                                  emailController.text,
+                                  passwordController.text,
+                                  context,
                                 );
+
+                                if (userId != null) {
+                                  final isCollector = loginViewModel.isCollector;
+
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => isCollector
+                                          ? const PendingRequestsScreen()
+                                          : RequestPickupScreen(userId: userId),
+                                    ),
+                                  );
+                                }
                               },
-                              child: Text("INICIAR SESIÓN", style: TextStyle(color: Colors.white)),
+                              child: const Text("INICIAR SESIÓN", style: TextStyle(color: Colors.white)),
                             );
                     },
                   ),
-                  SizedBox(height: 10),
-                  Consumer<LoginViewModel>(  // Mover el botón de registro dentro del Consumer
+                  const SizedBox(height: 10),
+                  Consumer<LoginViewModel>(
                     builder: (context, loginViewModel, child) {
                       return ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green.shade600,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          padding: EdgeInsets.symmetric(vertical: 15, horizontal: 40),
+                        style: _buttonStyle().copyWith(
+                          backgroundColor: MaterialStateProperty.all(Colors.green.shade600),
                         ),
-                        onPressed: () {
-                          loginViewModel.register(context);  // Aquí accedes correctamente al loginViewModel
-                        },
-                        child: Text("REGISTRARSE", style: TextStyle(color: Colors.white)),
+                        onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => RegisterScreen()),
+                        ),
+                        child: const Text("REGISTRARSE", style: TextStyle(color: Colors.white)),
                       );
                     },
                   ),
-                  SizedBox(height: 30),
-                  Text(
+                  const SizedBox(height: 30),
+                  const Text(
                     "EcoRide",
                     style: TextStyle(
                       fontSize: 80,
@@ -127,6 +110,38 @@ class LoginScreen extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    bool obscureText = false,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.green.shade700,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      child: TextField(
+        controller: controller,
+        decoration: InputDecoration(
+          labelText: label,
+          border: InputBorder.none,
+          labelStyle: const TextStyle(color: Colors.white),
+        ),
+        style: const TextStyle(color: Colors.white),
+        obscureText: obscureText,
+      ),
+    );
+  }
+
+  ButtonStyle _buttonStyle() {
+    return ElevatedButton.styleFrom(
+      backgroundColor: const Color.fromARGB(255, 33, 121, 39),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 40),
     );
   }
 }
