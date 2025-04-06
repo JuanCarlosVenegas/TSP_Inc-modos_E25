@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../viewmodels/generador_viewmodel.dart';
 import '../widgets/custom_map.dart';
 import '../views/login_screen.dart';
+import '../widgets/FormatoDinero.dart';
+import 'package:flutter_multi_formatter/flutter_multi_formatter.dart';
+
 
 class RequestPickupScreen extends StatelessWidget {
   final String userId;
@@ -103,9 +107,57 @@ class RequestPickupScreen extends StatelessWidget {
         const SizedBox(height: 10),
         Row(
           children: [
-            Expanded(child: TextField(controller: vm.timeController, decoration: _inputDecoration("Hora"))),
+            Expanded(
+              child: TextButton(
+                onPressed: () async {
+                  TimeOfDay? selectedTime = await showTimePicker(
+                    context: context,
+                    initialTime: TimeOfDay.now(),
+                    builder: (BuildContext context, Widget? child) {
+                      // Aplicar un tema personalizado para cambiar el color del reloj
+                      return Theme(
+                        data: ThemeData.light().copyWith(
+                          primaryColor: Colors.green, // Cambiar a verde
+                          colorScheme: ColorScheme.light(primary: Colors.green),    // Aseguramos que los iconos también sean verdes
+                          buttonTheme: ButtonThemeData(textTheme: ButtonTextTheme.primary),
+                        ),
+                        child: child!,
+                      );
+                    },
+                  );
+                  if (selectedTime != null) {
+                    final formattedTime = selectedTime.format(context);
+                    vm.timeController.text = formattedTime;
+                    vm.notifyListeners();
+                  }
+                },
+                child: InputDecorator(
+                  decoration: InputDecoration(
+                    labelText: "Hora",
+                    border: OutlineInputBorder(),
+                  ),
+                  child: Text(
+                    vm.timeController.text.isEmpty
+                        ? 'Seleccionar hora'
+                        : vm.timeController.text,
+                  ),
+                ),
+              ),
+            ),
             const SizedBox(width: 10),
-            Expanded(child: TextField(controller: vm.amountController, decoration: _inputDecoration("Monto"))),
+            Expanded(child: TextField(
+              controller: vm.amountController,
+              decoration: _inputDecoration("Monto"),
+              keyboardType: TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [
+                MoneyInputFormatter(
+                  leadingSymbol: '\$',
+                  useSymbolPadding: true,
+                  thousandSeparator: ThousandSeparator.Comma, // Opcional, puedes usar .dot
+                  mantissaLength: 2, // Número de decimales
+                ),
+              ],
+            )),
           ],
         ),
         const SizedBox(height: 10),
@@ -226,3 +278,6 @@ class RequestPickupScreen extends StatelessWidget {
     return InputDecoration(labelText: label, border: const OutlineInputBorder());
   }
 }
+
+
+

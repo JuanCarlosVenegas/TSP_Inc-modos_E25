@@ -254,6 +254,19 @@ class PickupRequestViewModel extends ChangeNotifier {
     }
   }
 
+  Future<void> _requestPermission() async {
+    LocationPermission permission = await Geolocator.checkPermission();
+
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      // El usuario ha denegado permanentemente los permisos
+      // Muestra un mensaje al usuario o redirígelo a la configuración de la app.
+      debugPrint("Permiso de localización denegado permanentemente.");
+    }
+  }
 
   // Función para cerrar sesión
   void logout() {

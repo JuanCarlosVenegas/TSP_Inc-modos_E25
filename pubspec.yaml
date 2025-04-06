@@ -46,6 +46,8 @@ dependencies:
   location: ^8.0.0       
   uuid: ^4.5.1  
   geocoding: 
+  intl:
+  flutter_multi_formatter:
 
 dev_dependencies:
   flutter_test:
