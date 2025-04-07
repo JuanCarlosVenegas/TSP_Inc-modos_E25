@@ -136,119 +136,136 @@ class PendingRequestsScreen extends StatelessWidget {
   }
 
   Widget _buildRequestCard(PickupRequest request, PendingRequestsViewModel vm) {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      elevation: 4,
-      margin: const EdgeInsets.symmetric(vertical: 10),
-      color: const Color(0xFFE8F5E9),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Datos de la solicitud
-            Expanded(
-              flex: 2,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("📍 Ubicación: ${request.location}",
-                      style: const TextStyle(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 6),
-                  Text("🕒 Hora: ${request.time}"),
-                  Text("♻️ Tipo: ${request.wasteType}"),
-                  Text("🔢 Cantidad: ${request.quantity}"),
-                  Text("📦 Tamaño: ${request.size}"),
-                  const SizedBox(height: 12),
-                  Text(
-                    "💰 Monto: ${request.amount}",
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  if (request.status == 'pendiente')
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () async {
-                          await vm.acceptRequest(request);
-                        },
-                        icon: const Icon(Icons.check_circle_outline),
-                        label: const Text("Aceptar solicitud"),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF388E3C),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
+    return FutureBuilder<String>(
+      future: vm.getAddressFromCoordinates(request.location.latitude, request.location.longitude),
+      builder: (context, snapshot) {
+        String address = 'Cargando dirección...';
+        if (snapshot.connectionState == ConnectionState.done) {
+          if (snapshot.hasError) {
+            address = 'Error al obtener dirección';
+          } else {
+            address = snapshot.data ?? 'Dirección no encontrada';
+          }
+        }
+
+        return Card(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          elevation: 4,
+          margin: const EdgeInsets.symmetric(vertical: 10),
+          color: const Color(0xFFE8F5E9),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Datos de la solicitud
+                Expanded(
+                  flex: 2,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text("📍 $address",  // Mostrar la dirección
+                          style: const TextStyle(fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 6),
+                      Text("🕒 Hora: ${request.time}"),
+                      Text("♻️ Tipo: ${request.wasteType}"),
+                      Text("🔢 Cantidad: ${request.quantity}"),
+                      Text("📦 Tamaño: ${request.size}"),
+                      
+                      const SizedBox(height: 12),
+                      Text(
+                        "💰 Monto: ${request.amount}",
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green,
                         ),
                       ),
-                    )
-                  else
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 8, horizontal: 12),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[200],
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.grey.shade400),
-                          ),
-                          child: const Text(
-                            "En recolección",
-                            style: TextStyle(
-                              color: Colors.black87,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14,
+                      const SizedBox(height: 12),
+                      if (request.status == 'pendiente')
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () async {
+                              await vm.acceptRequest(request);
+                            },
+                            icon: const Icon(Icons.check_circle_outline),
+                            label: const Text("Aceptar solicitud"),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF388E3C),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
                             ),
                           ),
+                        )
+                      else
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 8, horizontal: 12),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[200],
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.grey.shade400),
+                              ),
+                              child: const Text(
+                                "En recolección",
+                                style: TextStyle(
+                                  color: Colors.black87,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.notifications_active_outlined),
+                              color: Colors.grey[800],
+                              tooltip: 'Enviar notificación',
+                              onPressed: () {
+                                // Aquí se implementará la notificación más adelante
+                              },
+                            ),
+                          ],
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.notifications_active_outlined),
-                          color: Colors.grey[800],
-                          tooltip: 'Enviar notificación',
-                          onPressed: () {
-                            // Aquí se implementará la notificación más adelante
-                          },
-                        ),
-                      ],
-                    ),
-                ],
-              ),
-            ),
-
-            const SizedBox(width: 12),
-
-            // Imágenes
-            if (request.imageUrls.isNotEmpty)
-              Expanded(
-                flex: 1,
-                child: Column(
-                  children: request.imageUrls.map((url) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.network(
-                          url,
-                          height: 80,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    );
-                  }).toList(),
+                    ],
+                  ),
                 ),
-              ),
-          ],
-        ),
-      ),
+
+                const SizedBox(width: 12),
+
+                // Imágenes
+                if (request.imageUrls.isNotEmpty)
+                  Expanded(
+                    flex: 1,
+                    child: Column(
+                      children: request.imageUrls.map((url) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.network(
+                              url,
+                              height: 80,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
+
 }
+

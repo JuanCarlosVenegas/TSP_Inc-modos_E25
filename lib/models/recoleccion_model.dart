@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class PickupRequest {
   final String requestId;
   final String userId;
@@ -14,6 +16,9 @@ class PickupRequest {
   final String? collectorId;
   final List<String> imageUrls;
 
+  /// Campo opcional (no se guarda en Firestore) para calcular distancia
+  double? distance;
+
   PickupRequest({
     required this.requestId,
     required this.userId,
@@ -27,13 +32,14 @@ class PickupRequest {
     required this.createdAt,
     this.collectorId,
     required this.imageUrls,
+    this.distance,
   });
 
   Map<String, dynamic> toJson() {
     return {
       'requestId': requestId,
       'userId': userId,
-      'location': location,  // Se guarda como GeoPoint
+      'location': location, // GeoPoint
       'time': time,
       'amount': amount,
       'wasteType': wasteType,
@@ -43,6 +49,7 @@ class PickupRequest {
       'createdAt': createdAt.toIso8601String(),
       'collectorId': collectorId,
       'imageUrls': imageUrls,
+      // NOTA: distance no se guarda en Firestore
     };
   }
 
@@ -52,7 +59,7 @@ class PickupRequest {
       userId: json['userId'],
       location: json['location'] is GeoPoint
           ? json['location']
-          : GeoPoint(0, 0),  // Si la ubicación no es GeoPoint, asigna un GeoPoint vacío
+          : GeoPoint(0, 0), // Fallback por si viene mal
       time: json['time'],
       amount: json['amount'],
       wasteType: json['wasteType'],
@@ -68,7 +75,7 @@ class PickupRequest {
   PickupRequest copyWith({
     String? requestId,
     String? userId,
-    GeoPoint? location,  // Cambiado de String a GeoPoint
+    GeoPoint? location,
     String? time,
     String? amount,
     String? wasteType,
@@ -78,6 +85,7 @@ class PickupRequest {
     DateTime? createdAt,
     String? collectorId,
     List<String>? imageUrls,
+    double? distance, // nuevo
   }) {
     return PickupRequest(
       requestId: requestId ?? this.requestId,
@@ -92,6 +100,7 @@ class PickupRequest {
       createdAt: createdAt ?? this.createdAt,
       collectorId: collectorId ?? this.collectorId,
       imageUrls: imageUrls ?? this.imageUrls,
+      distance: distance ?? this.distance,
     );
   }
 }

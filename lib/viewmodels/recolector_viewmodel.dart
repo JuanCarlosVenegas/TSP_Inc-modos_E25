@@ -6,6 +6,8 @@ import '../models/recoleccion_model.dart';
 import '../services/solicitud_service.dart';
 import '../services/location_service.dart';
 import '../views/login_screen.dart';
+import 'package:geocoding/geocoding.dart';
+
 
 class PendingRequestsViewModel extends ChangeNotifier {
   final PickupRequestService _service = PickupRequestService();
@@ -35,20 +37,18 @@ class PendingRequestsViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Obtener ubicación actual del recolector
+      // Obtener solicitudes y ubicación del recolector
+      _pendingRequests = await _service.fetchPendingRequests();
       final currentPosition = await LocationService().getUserLocation();
 
-      // Obtener las solicitudes pendientes
-      _pendingRequests = await _service.fetchPendingRequests();
-
-      // Ordenar por distancia (si la ubicación está disponible)
+      // Si tenemos la ubicación actual, calculamos distancia y ordenamos
       if (currentPosition != null) {
-        _pendingRequests.sort((a, b) {
-          final aDistance = _calculateDistance(currentPosition, _parseLocation(a.location));
-          final bDistance = _calculateDistance(currentPosition, _parseLocation(b.location));
-          return aDistance.compareTo(bDistance);
-        });
+        for (var req in _pendingRequests) {
+          final distance = _calculateDistance(currentPosition, _parseLocation(req.location));
+          req.distance = distance;
+        }
 
+        _pendingRequests.sort((a, b) => a.distance!.compareTo(b.distance!));
         _initialPosition = currentPosition;
       }
     } catch (e) {
@@ -58,6 +58,7 @@ class PendingRequestsViewModel extends ChangeNotifier {
     _isLoading = false;
     notifyListeners();
   }
+
   void setMapController(GoogleMapController controller) {
     _mapController = controller;
   }
@@ -110,5 +111,38 @@ class PendingRequestsViewModel extends ChangeNotifier {
 
   double _degreesToRadians(double degrees) {
     return degrees * pi / 180;
+  }
+
+  String formatDistance(double? distanceInMeters) {
+    if (distanceInMeters == null) return '';
+    if (distanceInMeters < 1000) {
+      return '${distanceInMeters.toStringAsFixed(0)} m';
+    } else {
+      return '${(distanceInMeters / 1000).toStringAsFixed(1)} km';
+    }
+  }
+
+  Future<String> getAddressFromCoordinates(double latitude, double longitude) async {
+    try {
+      // Obtén la dirección a partir de las coordenadas
+      List<Placemark> placemarks = await placemarkFromCoordinates(latitude, longitude);
+      if (placemarks.isNotEmpty) {
+        Placemark place = placemarks[0];
+        // Concatenar la dirección completa
+        String address = '';
+        if (place.name != null) address += place.name! + ', ';
+        if (place.thoroughfare != null) address += place.thoroughfare! + ', ';
+        if (place.subLocality != null) address += place.subLocality! + ', ';
+        if (place.locality != null) address += place.locality! + ', ';
+        if (place.administrativeArea != null) address += place.administrativeArea! + ', ';
+        if (place.country != null) address += place.country!;
+        
+        return address;
+      } else {
+        return 'Dirección no disponible';
+      }
+    } catch (e) {
+      return 'Error al obtener la dirección: $e';
+    }
   }
 }
