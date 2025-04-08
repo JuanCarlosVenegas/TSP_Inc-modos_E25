@@ -154,7 +154,9 @@ class PendingRequestsScreen extends StatelessWidget {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           elevation: 4,
           margin: const EdgeInsets.symmetric(vertical: 10),
-          color: const Color(0xFFE8F5E9),
+          color: request.status == 'en recolección'
+            ? const Color(0xFFFFF9C4) // amarillo claro
+            : const Color(0xFFE8F5E9), // verde claro para pendientes
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Row(

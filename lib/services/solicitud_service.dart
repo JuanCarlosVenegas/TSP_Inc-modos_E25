@@ -60,15 +60,27 @@ class PickupRequestService {
   }
 
   Future<List<PickupRequest>> fetchPendingRequests() async {
-    final snapshot = await _firestore
+    final pendingSnapshot = await _firestore
         .collection('pickup_requests')
         .where('status', isEqualTo: 'pendiente')
         .get();
 
-    return snapshot.docs
+    final inProgressSnapshot = await _firestore
+        .collection('pickup_requests')
+        .where('status', isEqualTo: 'en recolección')
+        .get();
+
+    final pendingRequests = pendingSnapshot.docs
         .map((doc) => PickupRequest.fromJson(doc.data()))
         .toList();
+
+    final inProgressRequests = inProgressSnapshot.docs
+        .map((doc) => PickupRequest.fromJson(doc.data()))
+        .toList();
+
+    return pendingRequests + inProgressRequests;
   }
+
 
   Future<List<PickupRequest>> getAllRequests() async {
     final snapshot = await _firestore.collection('pickup_requests').get();

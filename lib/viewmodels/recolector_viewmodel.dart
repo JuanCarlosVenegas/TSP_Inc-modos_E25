@@ -39,12 +39,21 @@ class PendingRequestsViewModel extends ChangeNotifier {
   Set<Marker> get markers {
     return _pendingRequests.map((req) {
       final isSelected = req.requestId == _selectedRequestId;
+
+      // Determina el color según el estado
+      BitmapDescriptor markerColor;
+      if (req.status == 'en recolección') {
+        markerColor = BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueYellow);
+      } else if (isSelected) {
+        markerColor = BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen);
+      } else {
+        markerColor = BitmapDescriptor.defaultMarker;
+      }
+
       return Marker(
         markerId: MarkerId(req.requestId),
         position: _parseLocation(req.location),
-        icon: isSelected
-            ? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen)
-            : BitmapDescriptor.defaultMarker,
+        icon: markerColor,
         infoWindow: InfoWindow(
           title: req.wasteType,
           snippet: req.amount,
@@ -53,7 +62,8 @@ class PendingRequestsViewModel extends ChangeNotifier {
     }).toSet();
   }
 
-   Future<void> loadPendingRequests() async {
+
+  Future<void> loadPendingRequests() async {
     _isLoading = true;
     notifyListeners();
 
@@ -73,19 +83,15 @@ class PendingRequestsViewModel extends ChangeNotifier {
         _initialPosition = currentPosition;
       }
 
-      // Filtrar las solicitudes "en recolección" del recolector logueado
+      // 🔍 Filtrar solicitudes en recolección del recolector logueado
       var collectingRequests = _pendingRequests.where((req) =>
-          req.status == 'en recolección' /*&& req.collectorId == collectorId*/).toList();
+          req.status == 'en recolección' && req.collectorId == collectorId).toList();
 
-      // Filtrar las solicitudes "pendientes"
+      // 🔍 Filtrar solicitudes pendientes (sin asignar aún)
       var pendingRequests = _pendingRequests.where((req) => req.status == 'pendiente').toList();
 
-      // Filtrar las solicitudes que no están en "recolección" ni "pendientes" (puede ser "completadas" u otros estados)
-      var otherRequests = _pendingRequests.where((req) =>
-          req.status != 'en recolección' && req.status != 'pendiente').toList();
-
-      // Unir las solicitudes: primero "en recolección" del recolector, luego las "pendientes", y luego el resto
-      _pendingRequests = collectingRequests + pendingRequests /*+ otherRequests*/;
+      // 🔄 Unir: primero las del recolector, luego las pendientes
+      _pendingRequests = collectingRequests + pendingRequests;
 
     } catch (e) {
       debugPrint('Error al cargar solicitudes pendientes: $e');
@@ -94,6 +100,7 @@ class PendingRequestsViewModel extends ChangeNotifier {
     _isLoading = false;
     notifyListeners();
   }
+
 
   void setMapController(GoogleMapController controller) {
     _mapController = controller;
@@ -120,18 +127,64 @@ class PendingRequestsViewModel extends ChangeNotifier {
 
   Future<void> acceptRequest(PickupRequest request) async {
     try {
+      // Actualiza la solicitud en Firestore
       await _service.updateRequestStatusAndCollector(
         requestId: request.requestId,
         status: 'en recolección',
         collectorId: collectorId,
       );
+      
+      // Cambia el estado de la solicitud localmente
       request.status = 'en recolección';
       request.collectorId = collectorId;
+
+      // Actualizar la lista localmente: mover la solicitud "en recolección" al principio
+      _pendingRequests.removeWhere((req) => req.requestId == request.requestId); // Elimina la solicitud antigua
+      _pendingRequests.insert(0, request); // Inserta la solicitud al principio de la lista
+
+      // Reordenar las solicitudes en recolección por hora (si es necesario)
+      _pendingRequests.sort((a, b) {
+        // Solo ordenar entre las solicitudes "en recolección"
+        if (a.status == 'en recolección' && b.status == 'en recolección') {
+          return _timeStringToMinutes(a.time).compareTo(_timeStringToMinutes(b.time));
+        }
+        return 0; // No cambiar el orden de las demás solicitudes
+      });
+
+      // Notificar a los listeners para actualizar la UI
       notifyListeners();
     } catch (e) {
       debugPrint('Error al aceptar solicitud: $e');
     }
   }
+
+  int _timeStringToMinutes(String time) {
+    final regExp = RegExp(r'(\d+):(\d+) (\w{2})'); // RegExp para capturar hora, minuto y AM/PM
+    final match = regExp.firstMatch(time);
+
+    if (match != null) {
+      final hour = int.parse(match.group(1)!);
+      final minute = int.parse(match.group(2)!);
+      final amPm = match.group(3);
+
+      int totalMinutes = minute;
+
+      // Convertir hora a 24 horas
+      if (amPm == 'PM' && hour != 12) {
+        totalMinutes += (hour + 12) * 60; // Convertir PM a 24 horas
+      } else if (amPm == 'AM' && hour == 12) {
+        totalMinutes += 0; // 12 AM es medianoche (00:00)
+      } else {
+        totalMinutes += hour * 60; // Hora en formato AM sin cambiar
+      }
+
+      return totalMinutes;
+    }
+
+    return 0; // Si el formato es incorrecto o no se puede parsear, devuelve 0
+  }
+
+
 
   double _calculateDistance(LatLng from, LatLng to) {
     const earthRadius = 6371000; // en metros
