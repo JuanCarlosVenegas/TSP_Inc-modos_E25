@@ -67,7 +67,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   // Icono de usuario arriba de los campos de texto
                   Icon(
                     Icons.account_circle,
-                    size: 150, // Tamaño del icono
+                    size: 64, // Tamaño del icono
                     color: Colors.white,
                   ),
                   SizedBox(height: 20), // Espacio entre el icono y los campos de texto

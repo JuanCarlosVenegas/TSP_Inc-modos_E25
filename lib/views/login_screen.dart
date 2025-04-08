@@ -88,7 +88,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     builder: (context, loginViewModel, child) {
                       return ElevatedButton(
                         style: _buttonStyle().copyWith(
-                          backgroundColor: MaterialStateProperty.all(Colors.green.shade600),
+                          backgroundColor: WidgetStateProperty.all(Colors.green.shade600),
                         ),
                         onPressed: () => Navigator.push(
                           context,

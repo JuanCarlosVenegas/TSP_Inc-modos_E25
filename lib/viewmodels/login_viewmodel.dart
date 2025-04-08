@@ -57,7 +57,7 @@ class LoginViewModel extends ChangeNotifier {
         context,
         MaterialPageRoute(
           builder: (context) => isCollector
-              ? const PendingRequestsScreen()
+              ? PendingRequestsScreen(collectorId: _userId!)// sin const
               : RequestPickupScreen(userId: _userId!),
         )
       );

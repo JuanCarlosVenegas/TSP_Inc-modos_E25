@@ -6,12 +6,12 @@ import '../viewmodels/recolector_viewmodel.dart';
 import '../models/recoleccion_model.dart';
 
 class PendingRequestsScreen extends StatelessWidget {
-  const PendingRequestsScreen({super.key});
-
+  final String collectorId;
+  const PendingRequestsScreen({super.key, required this.collectorId});
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => PendingRequestsViewModel()..loadPendingRequests(),
+      create: (_) => PendingRequestsViewModel(collectorId: collectorId)..loadPendingRequests(),
       child: Consumer<PendingRequestsViewModel>(
         builder: (context, vm, _) {
           if (vm.isLoading || vm.initialPosition == null) {
@@ -148,7 +148,9 @@ class PendingRequestsScreen extends StatelessWidget {
           }
         }
 
-        return Card(
+        return GestureDetector(
+          onTap: () => vm.selectRequest(request.requestId),
+          child: Card(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           elevation: 4,
           margin: const EdgeInsets.symmetric(vertical: 10),
@@ -166,6 +168,12 @@ class PendingRequestsScreen extends StatelessWidget {
                     children: [
                       Text("📍 $address",  // Mostrar la dirección
                           style: const TextStyle(fontWeight: FontWeight.bold)),
+                       /// 💡 Aquí agregamos la distancia
+                      if (request.distance != null)
+                        Text(
+                          "📏 Distancia: ${vm.formatDistance(request.distance)}",
+                          style: const TextStyle(color: Colors.grey),
+                        ),
                       const SizedBox(height: 6),
                       Text("🕒 Hora: ${request.time}"),
                       Text("♻️ Tipo: ${request.wasteType}"),
@@ -262,7 +270,7 @@ class PendingRequestsScreen extends StatelessWidget {
               ],
             ),
           ),
-        );
+        ));
       },
     );
   }

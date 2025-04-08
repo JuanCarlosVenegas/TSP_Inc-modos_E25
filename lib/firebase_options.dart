@@ -83,4 +83,5 @@ class DefaultFirebaseOptions {
     authDomain: 'ecoride-82bb2.firebaseapp.com',
     storageBucket: 'ecoride-82bb2.firebasestorage.app',
   );
+
 }

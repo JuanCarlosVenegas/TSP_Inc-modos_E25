@@ -153,34 +153,86 @@ class PickupRequestViewModel extends ChangeNotifier {
   }
 
   Future<void> confirmRequest() async {
-    if (currentPosition == null) return;
+    if (currentPosition == null) {
+      _showError("Ubicación no disponible.");
+      return;
+    }
 
-    // Crear una solicitud con los valores actuales
+    final locationText = locationController.text.trim();
+    final timeText = timeController.text.trim();
+    final amountText = amountController.text.trim();
+
+    if (locationText.isEmpty || timeText.isEmpty || amountText.isEmpty) {
+      _showError("Por favor, completa todos los campos obligatorios.");
+      return;
+    }
+
+    // Remueve símbolos y verifica que el valor numérico sea mayor que 0
+    final cleanAmount = amountText.replaceAll(RegExp(r'[^\d.]'), '');
+    final parsedAmount = double.tryParse(cleanAmount) ?? 0;
+
+    if (parsedAmount <= 0) {
+      _showError("El monto debe ser mayor a \$0.00");
+      return;
+    }
+
     final request = PickupRequest(
-      requestId: '',  // Se genera automáticamente en el servicio
+      requestId: '',
       userId: userId,
-      location: GeoPoint(currentPosition!.latitude, currentPosition!.longitude), // GeoPoint con las coordenadas
-      time: timeController.text,
-      amount: amountController.text,
+      location: GeoPoint(currentPosition!.latitude, currentPosition!.longitude),
+      time: timeText,
+      amount: amountText,
       wasteType: selectedWasteType,
       quantity: quantity,
-      size: sizeLabel, // Usa el método sizeLabel para obtener el nombre del tamaño
-      status: 'pendiente', // El estado inicial es 'pendiente'
-      createdAt: DateTime.now(), // Usar la fecha y hora actual
-      collectorId: null, // Aún no asignado
-      imageUrls: [], // Las imágenes serán manejadas por el servicio
+      size: sizeLabel,
+      status: 'pendiente',
+      createdAt: DateTime.now(),
+      collectorId: null,
+      imageUrls: [],
     );
 
-    // Llamar al servicio para guardar la solicitud en Firestore
     try {
       await _service.saveRequest(request, selectedImages, currentPosition!);
-      // Puedes agregar alguna lógica para manejar el estado de éxito, como un mensaje o actualización de UI
+      resetForm();
+
+      // También puedes mostrar un mensaje de éxito si quieres
+      _showSuccess("¡Solicitud enviada con éxito!");
     } catch (e) {
       print("Error al confirmar la solicitud: $e");
-      // Aquí podrías agregar una lógica de manejo de errores para mostrar al usuario si algo falla
+      _showError("Hubo un error al guardar la solicitud.");
     }
   }
 
+  void _showError(String message) {
+    final context = locationFocusNode.context;
+    if (context != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  void resetForm() {
+    locationController.clear();
+    timeController.clear();
+    amountController.clear();
+    // quantity = 1;
+    // quantityController.text = '1';
+    // sizeValue = 1;
+    // selectedWasteType = ''; // o null
+    // selectedImages.clear();
+    notifyListeners();
+  }
+
+
+  void _showSuccess(String message) {
+    final context = locationFocusNode.context;
+    if (context != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message), backgroundColor: Colors.green),
+      );
+    }
+  }
 
   @override
   void dispose() {

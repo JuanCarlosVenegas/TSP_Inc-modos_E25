@@ -11,6 +11,9 @@ import 'package:geocoding/geocoding.dart';
 
 class PendingRequestsViewModel extends ChangeNotifier {
   final PickupRequestService _service = PickupRequestService();
+  final String collectorId;
+
+  PendingRequestsViewModel({required this.collectorId});
 
   List<PickupRequest> _pendingRequests = [];
   bool _isLoading = false;
@@ -21,23 +24,41 @@ class PendingRequestsViewModel extends ChangeNotifier {
   bool get isLoading => _isLoading;
   LatLng? get initialPosition => _initialPosition;
 
-  Set<Marker> get markers => _pendingRequests.map((req) {
-        return Marker(
-          markerId: MarkerId(req.requestId),
-          position: _parseLocation(req.location),
-          infoWindow: InfoWindow(
-            title: req.wasteType,
-            snippet: req.amount,
-          ),
-        );
-      }).toSet();
+  String? _selectedRequestId;
+  String? get selectedRequestId => _selectedRequestId;
 
-  Future<void> loadPendingRequests() async {
+  void selectRequest(String requestId) {
+    _selectedRequestId = requestId;
+    final selected = _pendingRequests.firstWhere((r) => r.requestId == requestId);
+    _mapController?.animateCamera(
+      CameraUpdate.newLatLng(_parseLocation(selected.location)),
+    );
+    notifyListeners();
+  }
+
+  Set<Marker> get markers {
+    return _pendingRequests.map((req) {
+      final isSelected = req.requestId == _selectedRequestId;
+      return Marker(
+        markerId: MarkerId(req.requestId),
+        position: _parseLocation(req.location),
+        icon: isSelected
+            ? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen)
+            : BitmapDescriptor.defaultMarker,
+        infoWindow: InfoWindow(
+          title: req.wasteType,
+          snippet: req.amount,
+        ),
+      );
+    }).toSet();
+  }
+
+   Future<void> loadPendingRequests() async {
     _isLoading = true;
     notifyListeners();
 
     try {
-      // Obtener solicitudes y ubicación del recolector
+      // Obtener todas las solicitudes de recolección
       _pendingRequests = await _service.fetchPendingRequests();
       final currentPosition = await LocationService().getUserLocation();
 
@@ -51,6 +72,21 @@ class PendingRequestsViewModel extends ChangeNotifier {
         _pendingRequests.sort((a, b) => a.distance!.compareTo(b.distance!));
         _initialPosition = currentPosition;
       }
+
+      // Filtrar las solicitudes "en recolección" del recolector logueado
+      var collectingRequests = _pendingRequests.where((req) =>
+          req.status == 'en recolección' /*&& req.collectorId == collectorId*/).toList();
+
+      // Filtrar las solicitudes "pendientes"
+      var pendingRequests = _pendingRequests.where((req) => req.status == 'pendiente').toList();
+
+      // Filtrar las solicitudes que no están en "recolección" ni "pendientes" (puede ser "completadas" u otros estados)
+      var otherRequests = _pendingRequests.where((req) =>
+          req.status != 'en recolección' && req.status != 'pendiente').toList();
+
+      // Unir las solicitudes: primero "en recolección" del recolector, luego las "pendientes", y luego el resto
+      _pendingRequests = collectingRequests + pendingRequests /*+ otherRequests*/;
+
     } catch (e) {
       debugPrint('Error al cargar solicitudes pendientes: $e');
     }
@@ -75,7 +111,6 @@ class PendingRequestsViewModel extends ChangeNotifier {
     return LatLng(geoPoint.latitude, geoPoint.longitude);
   }
 
-
   void logout(BuildContext context) {
     Navigator.pushReplacement(
       context,
@@ -85,8 +120,13 @@ class PendingRequestsViewModel extends ChangeNotifier {
 
   Future<void> acceptRequest(PickupRequest request) async {
     try {
-      await _service.updateRequestStatus(request.requestId, 'en recolección');
+      await _service.updateRequestStatusAndCollector(
+        requestId: request.requestId,
+        status: 'en recolección',
+        collectorId: collectorId,
+      );
       request.status = 'en recolección';
+      request.collectorId = collectorId;
       notifyListeners();
     } catch (e) {
       debugPrint('Error al aceptar solicitud: $e');
@@ -130,11 +170,10 @@ class PendingRequestsViewModel extends ChangeNotifier {
         Placemark place = placemarks[0];
         // Concatenar la dirección completa
         String address = '';
-        if (place.name != null) address += place.name! + ', ';
-        if (place.thoroughfare != null) address += place.thoroughfare! + ', ';
-        if (place.subLocality != null) address += place.subLocality! + ', ';
-        if (place.locality != null) address += place.locality! + ', ';
-        if (place.administrativeArea != null) address += place.administrativeArea! + ', ';
+        if (place.thoroughfare != null) address += place.thoroughfare!;
+        if (place.name != null) address += '${place.name!}, ';       
+        if (place.subLocality != null) address += '${place.subLocality!}, ';
+        if (place.administrativeArea != null) address += '${place.administrativeArea!}, ';
         if (place.country != null) address += place.country!;
         
         return address;

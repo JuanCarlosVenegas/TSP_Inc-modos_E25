@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../viewmodels/generador_viewmodel.dart';
@@ -196,29 +195,34 @@ class RequestPickupScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 10),
-            SizedBox(
-              width: 80,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            Container(
+              width: 110,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
                 children: [
-                  const Text("Cantidad", style: TextStyle(fontSize: 12)),
-                  Container(
-                    height: 48,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey),
-                      borderRadius: BorderRadius.circular(4),
+                  IconButton(
+                    icon: const Icon(Icons.remove, size: 20),
+                    onPressed: vm.decreaseQuantity,
+                    constraints: const BoxConstraints(),
+                    padding: EdgeInsets.zero,
+                  ),
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        vm.quantityController.text,
+                        style: const TextStyle(fontSize: 16),
+                      ),
                     ),
-                    child: Row(
-                      children: [
-                        Expanded(child: Center(child: Text(vm.quantityController.text))),
-                        Column(
-                          children: [
-                            IconButton(icon: const Icon(Icons.arrow_drop_up), onPressed: vm.increaseQuantity),
-                            IconButton(icon: const Icon(Icons.arrow_drop_down), onPressed: vm.decreaseQuantity),
-                          ],
-                        )
-                      ],
-                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.add, size: 20),
+                    onPressed: vm.increaseQuantity,
+                    constraints: const BoxConstraints(),
+                    padding: EdgeInsets.zero,
                   ),
                 ],
               ),
@@ -230,13 +234,22 @@ class RequestPickupScreen extends StatelessWidget {
         Center(
           child: SizedBox(
             width: 250,
-            child: Slider(
-              value: vm.sizeValue,
-              min: 1,
-              max: 3,
-              divisions: 2,
-              label: vm.sizeLabel,
-              onChanged: (value) => vm.updateSize(value.toInt()),
+            child: SliderTheme(
+              data: SliderTheme.of(context).copyWith(
+                activeTrackColor: Colors.green,     // Línea activa (deslizada)
+                inactiveTrackColor: Colors.green[100], // Línea inactiva (sin deslizar)
+                thumbColor: Colors.green,           // El "círculo" que se arrastra
+                overlayColor: Colors.green.withOpacity(0.2), // Color cuando haces tap o drag
+                valueIndicatorColor: Colors.green,  // Color del indicador flotante (label)
+              ),
+              child: Slider(
+                value: vm.sizeValue,
+                min: 1,
+                max: 3,
+                divisions: 2,
+                label: vm.sizeLabel,
+                onChanged: (value) => vm.updateSize(value.toInt()),
+              ),
             ),
           ),
         ),

@@ -76,4 +76,23 @@ class PickupRequestService {
         .map((doc) => PickupRequest.fromJson(doc.data()))
         .toList();
   }
+
+  Future<void> updateRequestStatusAndCollector({
+    required String requestId,
+    required String status,
+    required String collectorId,
+  }) async {
+    final docRef = FirebaseFirestore.instance.collection('pickup_requests').doc(requestId);
+    final doc = await docRef.get();
+
+    if (!doc.exists) {
+      throw Exception('La solicitud con ID $requestId no existe.');
+    }
+
+    await docRef.update({
+      'status': status,
+      'collectorId': collectorId,
+    });
+  }
+
 }

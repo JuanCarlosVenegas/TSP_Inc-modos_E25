@@ -81,7 +81,7 @@ class RegisterViewModel extends ChangeNotifier {
         context,
         MaterialPageRoute(
           builder: (context) => isCollector
-              ? const PendingRequestsScreen()
+              ? PendingRequestsScreen(collectorId: userId)
               : RequestPickupScreen(userId: userId),
         ),
       );

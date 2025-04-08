@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 class PickupRequest {
   final String requestId;
@@ -13,7 +12,7 @@ class PickupRequest {
   final String size;
   String status;
   final DateTime createdAt;
-  final String? collectorId;
+  String? collectorId;
   final List<String> imageUrls;
 
   /// Campo opcional (no se guarda en Firestore) para calcular distancia
