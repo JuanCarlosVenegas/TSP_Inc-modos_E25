@@ -126,63 +126,83 @@ class PendingRequestsViewModel extends ChangeNotifier {
   }
 
   Future<void> acceptRequest(PickupRequest request) async {
-    try {
-      // Actualiza la solicitud en Firestore
-      await _service.updateRequestStatusAndCollector(
-        requestId: request.requestId,
-        status: 'en recolección',
-        collectorId: collectorId,
-      );
-      
-      // Cambia el estado de la solicitud localmente
-      request.status = 'en recolección';
-      request.collectorId = collectorId;
+  try {
+    // Actualiza la solicitud en Firestore
+    await _service.updateRequestStatusAndCollector(
+      requestId: request.requestId,
+      status: 'en recolección',
+      collectorId: collectorId,
+    );
+    
+    // Cambia el estado de la solicitud localmente
+    request.status = 'en recolección';
+    request.collectorId = collectorId;
 
-      // Actualizar la lista localmente: mover la solicitud "en recolección" al principio
-      _pendingRequests.removeWhere((req) => req.requestId == request.requestId); // Elimina la solicitud antigua
-      _pendingRequests.insert(0, request); // Inserta la solicitud al principio de la lista
+    // Actualizar la lista localmente: mover la solicitud "en recolección" al principio
+    _pendingRequests.removeWhere((req) => req.requestId == request.requestId); // Elimina la solicitud antigua
+    _pendingRequests.insert(0, request); // Inserta la solicitud al principio de la lista
 
-      // Reordenar las solicitudes en recolección por hora (si es necesario)
-      _pendingRequests.sort((a, b) {
-        // Solo ordenar entre las solicitudes "en recolección"
-        if (a.status == 'en recolección' && b.status == 'en recolección') {
-          return _timeStringToMinutes(a.time).compareTo(_timeStringToMinutes(b.time));
-        }
-        return 0; // No cambiar el orden de las demás solicitudes
-      });
-
-      // Notificar a los listeners para actualizar la UI
-      notifyListeners();
-    } catch (e) {
-      debugPrint('Error al aceptar solicitud: $e');
-    }
-  }
-
-  int _timeStringToMinutes(String time) {
-    final regExp = RegExp(r'(\d+):(\d+) (\w{2})'); // RegExp para capturar hora, minuto y AM/PM
-    final match = regExp.firstMatch(time);
-
-    if (match != null) {
-      final hour = int.parse(match.group(1)!);
-      final minute = int.parse(match.group(2)!);
-      final amPm = match.group(3);
-
-      int totalMinutes = minute;
-
-      // Convertir hora a 24 horas
-      if (amPm == 'PM' && hour != 12) {
-        totalMinutes += (hour + 12) * 60; // Convertir PM a 24 horas
-      } else if (amPm == 'AM' && hour == 12) {
-        totalMinutes += 0; // 12 AM es medianoche (00:00)
-      } else {
-        totalMinutes += hour * 60; // Hora en formato AM sin cambiar
+    // Reordenar las solicitudes en recolección por hora (si es necesario)
+    _pendingRequests.sort((a, b) {
+      // Solo ordenar entre las solicitudes "en recolección"
+      if (a.status == 'en recolección' && b.status == 'en recolección') {
+        return _timeStringToMinutes(a.time).compareTo(_timeStringToMinutes(b.time));
       }
+      return 0; // No cambiar el orden de las demás solicitudes
+    });
 
-      return totalMinutes;
+    // Notificar a los listeners para actualizar la UI
+    notifyListeners();
+  } catch (e) {
+    debugPrint('Error al aceptar solicitud: $e');
+  }
+}
+
+int _timeStringToMinutes(String time) {
+  final regExp = RegExp(r'(\d+):(\d+) (\w{2})'); // RegExp para capturar hora, minuto y AM/PM
+  final match = regExp.firstMatch(time);
+
+  if (match != null) {
+    final hour = int.parse(match.group(1)!);
+    final minute = int.parse(match.group(2)!);
+    final amPm = match.group(3);
+
+    int totalMinutes = minute;
+
+    // Convertir hora a 24 horas
+    if (amPm == 'PM' && hour != 12) {
+      totalMinutes += (hour + 12) * 60; // Convertir PM a 24 horas
+    } else if (amPm == 'AM' && hour == 12) {
+      totalMinutes += 0; // 12 AM es medianoche (00:00)
+    } else {
+      totalMinutes += hour * 60; // Hora en formato AM sin cambiar
     }
 
-    return 0; // Si el formato es incorrecto o no se puede parsear, devuelve 0
+    return totalMinutes;
   }
+
+  return 0; // Si el formato es incorrecto o no se puede parsear, devuelve 0
+}
+
+Future<void> completeRequest(PickupRequest request) async {
+  try {
+    // Actualiza el estado de la solicitud en Firestore
+    await _service.updateRequestStatus(request.requestId, 'completada');
+
+    // Elimina la solicitud de la lista local
+    _pendingRequests.removeWhere((r) => r.requestId == request.requestId);
+
+    // Notificar a los listeners para que la UI se actualice
+    notifyListeners();
+  } catch (e) {
+    debugPrint('Error al completar solicitud: $e');
+    rethrow; // Vuelve a lanzar el error para poder gestionarlo fuera de la función
+  }
+}
+
+
+
+
 
 
 
@@ -237,4 +257,20 @@ class PendingRequestsViewModel extends ChangeNotifier {
       return 'Error al obtener la dirección: $e';
     }
   }
+
+  
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
+
+  Future<void> updateRequestStatus(String requestId, String status) async {
+    await _db.collection('pickup_requests').doc(requestId).update({
+      'status': status,
+    });
+  }
+
+  Future<void> removeRequestFromList(String requestId) async {
+    // Este método no es necesario si solo gestionas la lista en el ViewModel
+    // Aquí el ViewModel se encargará de eliminar la solicitud de la lista localmente
+  }
 }
+
+

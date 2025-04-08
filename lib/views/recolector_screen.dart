@@ -136,27 +136,27 @@ class PendingRequestsScreen extends StatelessWidget {
   }
 
   Widget _buildRequestCard(PickupRequest request, PendingRequestsViewModel vm) {
-    return FutureBuilder<String>(
-      future: vm.getAddressFromCoordinates(request.location.latitude, request.location.longitude),
-      builder: (context, snapshot) {
-        String address = 'Cargando dirección...';
-        if (snapshot.connectionState == ConnectionState.done) {
-          if (snapshot.hasError) {
-            address = 'Error al obtener dirección';
-          } else {
-            address = snapshot.data ?? 'Dirección no encontrada';
-          }
+  return FutureBuilder<String>(
+    future: vm.getAddressFromCoordinates(request.location.latitude, request.location.longitude),
+    builder: (context, snapshot) {
+      String address = 'Cargando dirección...';
+      if (snapshot.connectionState == ConnectionState.done) {
+        if (snapshot.hasError) {
+          address = 'Error al obtener dirección';
+        } else {
+          address = snapshot.data ?? 'Dirección no encontrada';
         }
+      }
 
-        return GestureDetector(
-          onTap: () => vm.selectRequest(request.requestId),
-          child: Card(
+      return GestureDetector(
+        onTap: () => vm.selectRequest(request.requestId),
+        child: Card(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           elevation: 4,
           margin: const EdgeInsets.symmetric(vertical: 10),
           color: request.status == 'en recolección'
-            ? const Color(0xFFFFF9C4) // amarillo claro
-            : const Color(0xFFE8F5E9), // verde claro para pendientes
+              ? const Color(0xFFFFF9C4) // amarillo claro
+              : const Color(0xFFE8F5E9), // verde claro para pendientes
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
@@ -170,7 +170,7 @@ class PendingRequestsScreen extends StatelessWidget {
                     children: [
                       Text("📍 $address",  // Mostrar la dirección
                           style: const TextStyle(fontWeight: FontWeight.bold)),
-                       /// 💡 Aquí agregamos la distancia
+                      /// 💡 Aquí agregamos la distancia
                       if (request.distance != null)
                         Text(
                           "📏 Distancia: ${vm.formatDistance(request.distance)}",
@@ -181,7 +181,7 @@ class PendingRequestsScreen extends StatelessWidget {
                       Text("♻️ Tipo: ${request.wasteType}"),
                       Text("🔢 Cantidad: ${request.quantity}"),
                       Text("📦 Tamaño: ${request.size}"),
-                      
+
                       const SizedBox(height: 12),
                       Text(
                         "💰 Monto: ${request.amount}",
@@ -215,20 +215,25 @@ class PendingRequestsScreen extends StatelessWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 8, horizontal: 12),
-                              decoration: BoxDecoration(
-                                color: Colors.grey[200],
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.grey.shade400),
-                              ),
-                              child: const Text(
-                                "En recolección",
-                                style: TextStyle(
-                                  color: Colors.black87,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 14,
+                            // Botón "En recolección" que actualiza el estado
+                            GestureDetector(
+                              onTap: () async {
+                                await vm.completeRequest(request);
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[200],
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.grey.shade400),
+                                ),
+                                child: const Text(
+                                  "En recolección",
+                                  style: TextStyle(
+                                    color: Colors.black87,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                  ),
                                 ),
                               ),
                             ),
@@ -272,10 +277,12 @@ class PendingRequestsScreen extends StatelessWidget {
               ],
             ),
           ),
-        ));
-      },
-    );
-  }
+        ),
+      );
+    },
+  );
+}
+
 
 }
 
