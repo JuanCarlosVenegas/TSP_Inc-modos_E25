@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../viewmodels/register_viewmodel.dart'; 
-import '../models/user_model.dart';  
+import '../viewmodels/register_viewmodel.dart';
+import '../models/user_model.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -34,10 +34,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: Image.asset(
-                  'assets/locoEcoRide.png',
-                  height: 30,
-                ),
+                child: Image.asset('assets/locoEcoRide.png', height: 30),
               ),
               SizedBox(width: 10),
               Text(
@@ -70,8 +67,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     size: 64, // Tamaño del icono
                     color: Colors.white,
                   ),
-                  SizedBox(height: 20), // Espacio entre el icono y los campos de texto
-                  
+                  SizedBox(
+                    height: 20,
+                  ), // Espacio entre el icono y los campos de texto
+
                   TextField(
                     controller: nameController,
                     decoration: InputDecoration(
@@ -79,7 +78,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       labelStyle: TextStyle(color: Colors.white),
                       filled: true,
                       fillColor: Colors.green.shade700,
-                      prefixIcon: Icon(Icons.person, color: Colors.white), // Icono en el campo
+                      prefixIcon: Icon(
+                        Icons.person,
+                        color: Colors.white,
+                      ), // Icono en el campo
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                         borderSide: BorderSide.none,
@@ -95,7 +97,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       labelStyle: TextStyle(color: Colors.white),
                       filled: true,
                       fillColor: Colors.green.shade700,
-                      prefixIcon: Icon(Icons.email, color: Colors.white), // Icono en el campo
+                      prefixIcon: Icon(
+                        Icons.email,
+                        color: Colors.white,
+                      ), // Icono en el campo
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                         borderSide: BorderSide.none,
@@ -111,7 +116,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       labelStyle: TextStyle(color: Colors.white),
                       filled: true,
                       fillColor: Colors.green.shade700,
-                      prefixIcon: Icon(Icons.lock, color: Colors.white), // Icono en el campo
+                      prefixIcon: Icon(
+                        Icons.lock,
+                        color: Colors.white,
+                      ), // Icono en el campo
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                         borderSide: BorderSide.none,
@@ -145,28 +153,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       return registerViewModel.isLoading
                           ? CircularProgressIndicator()
                           : ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.green.shade700,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                padding: EdgeInsets.symmetric(
-                                    vertical: 15, horizontal: 40),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green.shade700,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
                               ),
-                              onPressed: () {
-                                final user = UserModel(
-                                  name: nameController.text,
-                                  email: emailController.text,
-                                  password: passwordController.text,
-                                  isCollector: isCollector,
-                                );
-                                registerViewModel.registerUser(user, context);
-                              },
-                              child: Text(
-                                "Crear Cuenta",
-                                style: TextStyle(color: Colors.white),
+                              padding: EdgeInsets.symmetric(
+                                vertical: 15,
+                                horizontal: 40,
                               ),
-                            );
+                            ),
+                            onPressed: () {
+                              final user = UserModel(
+                                name: nameController.text,
+                                email: emailController.text,
+                                password: passwordController.text,
+                                isCollector: isCollector,
+                              );
+                              registerViewModel.registerUser(user, context);
+                            },
+                            child: Text(
+                              "Crear Cuenta",
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          );
                     },
                   ),
                 ],

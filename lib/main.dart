@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'views/login_screen.dart';  // Pantalla de login
+import 'views/login_screen.dart'; 
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 

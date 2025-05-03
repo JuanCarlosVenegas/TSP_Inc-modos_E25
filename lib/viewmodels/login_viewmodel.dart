@@ -56,10 +56,14 @@ class LoginViewModel extends ChangeNotifier {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => isCollector
-              ? PendingRequestsScreen(collectorId: _userId!)// sin const
-              : RequestPickupScreen(userId: _userId!),
-        )
+          builder:
+              (context) =>
+                  isCollector
+                      ? PendingRequestsScreen(
+                        collectorId: _userId!,
+                      ) // sin const
+                      : RequestPickupScreen(userId: _userId!),
+        ),
       );
     }
   }

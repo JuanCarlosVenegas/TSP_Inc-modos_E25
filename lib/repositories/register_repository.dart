@@ -16,14 +16,17 @@ class RegisterRepository {
   // Verificar si el correo ya está registrado
   Future<bool> emailExists(String email) async {
     try {
-      final existingUsers = await _firestore
-          .collection('users')
-          .where('email', isEqualTo: email)
-          .get();
+      final existingUsers =
+          await _firestore
+              .collection('users')
+              .where('email', isEqualTo: email)
+              .get();
 
       return existingUsers.docs.isNotEmpty;
     } catch (e) {
-      throw Exception("Error al verificar si el correo existe: ${e.toString()}");
+      throw Exception(
+        "Error al verificar si el correo existe: ${e.toString()}",
+      );
     }
   }
 

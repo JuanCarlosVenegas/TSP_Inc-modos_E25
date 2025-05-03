@@ -15,24 +15,28 @@ class LoginRepository {
     try {
       final hashedPassword = hashPassword(password);
 
-      final querySnapshot = await _firestore
-          .collection('users')
-          .where('email', isEqualTo: email)
-          .where('password', isEqualTo: hashedPassword)
-          .get();
+      final querySnapshot =
+          await _firestore
+              .collection('users')
+              .where('email', isEqualTo: email)
+              .where('password', isEqualTo: hashedPassword)
+              .get();
 
       return querySnapshot.docs.isNotEmpty;
     } catch (e) {
-      throw Exception("Error al verificar el inicio de sesión: ${e.toString()}");
+      throw Exception(
+        "Error al verificar el inicio de sesión: ${e.toString()}",
+      );
     }
   }
 
   Future<Map<String, dynamic>?> getUserData(String email) async {
     try {
-      final querySnapshot = await _firestore
-          .collection('users')
-          .where('email', isEqualTo: email)
-          .get();
+      final querySnapshot =
+          await _firestore
+              .collection('users')
+              .where('email', isEqualTo: email)
+              .get();
 
       if (querySnapshot.docs.isNotEmpty) {
         final doc = querySnapshot.docs.first;
@@ -43,7 +47,9 @@ class LoginRepository {
 
       return null;
     } catch (e) {
-      throw Exception("Error al obtener los datos del usuario: ${e.toString()}");
+      throw Exception(
+        "Error al obtener los datos del usuario: ${e.toString()}",
+      );
     }
   }
 }

@@ -17,7 +17,9 @@ class RegisterViewModel extends ChangeNotifier {
 
   // Validar correo
   bool isValidEmail(String email) {
-    final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+    final emailRegex = RegExp(
+      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+    );
     return emailRegex.hasMatch(email);
   }
 
@@ -25,7 +27,6 @@ class RegisterViewModel extends ChangeNotifier {
   bool isValidPassword(String password) {
     return password.length >= 8 && password.contains(RegExp(r'\d'));
   }
-
 
   Future<void> registerUser(UserModel user, BuildContext context) async {
     try {
@@ -41,7 +42,11 @@ class RegisterViewModel extends ChangeNotifier {
 
       if (!isValidPassword(user.password)) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("La contraseña debe tener al menos 8 caracteres y contener un número")),
+          SnackBar(
+            content: Text(
+              "La contraseña debe tener al menos 8 caracteres y contener un número",
+            ),
+          ),
         );
         return;
       }
@@ -50,22 +55,21 @@ class RegisterViewModel extends ChangeNotifier {
       bool emailAlreadyExists = await _repository.emailExists(user.email);
 
       if (emailAlreadyExists) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("El correo ya está registrado")),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("El correo ya está registrado")));
         return;
       }
 
       // Registrar al usuario
       await _repository.registerUser(user);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Cuenta registrada exitosamente")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Cuenta registrada exitosamente")));
 
       // Redirigir a la página correspondiente después del registro
       navigateToAppropriateScreen(context, user.email, user.isCollector);
-
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error inesperado: ${e.toString()}")),
@@ -75,14 +79,20 @@ class RegisterViewModel extends ChangeNotifier {
     }
   }
 
-  void navigateToAppropriateScreen(BuildContext context, String? userId, bool isCollector) {
+  void navigateToAppropriateScreen(
+    BuildContext context,
+    String? userId,
+    bool isCollector,
+  ) {
     if (userId != null) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => isCollector
-              ? PendingRequestsScreen(collectorId: userId)
-              : RequestPickupScreen(userId: userId),
+          builder:
+              (context) =>
+                  isCollector
+                      ? PendingRequestsScreen(collectorId: userId)
+                      : RequestPickupScreen(userId: userId),
         ),
       );
     }

@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-
 class PickupRequest {
   final String requestId;
   final String userId;
@@ -56,9 +55,10 @@ class PickupRequest {
     return PickupRequest(
       requestId: json['requestId'],
       userId: json['userId'],
-      location: json['location'] is GeoPoint
-          ? json['location']
-          : GeoPoint(0, 0), // Fallback por si viene mal
+      location:
+          json['location'] is GeoPoint
+              ? json['location']
+              : GeoPoint(0, 0), // Fallback por si viene mal
       time: json['time'],
       amount: json['amount'],
       wasteType: json['wasteType'],
@@ -84,7 +84,7 @@ class PickupRequest {
     DateTime? createdAt,
     String? collectorId,
     List<String>? imageUrls,
-    double? distance, // nuevo
+    double? distance,
   }) {
     return PickupRequest(
       requestId: requestId ?? this.requestId,

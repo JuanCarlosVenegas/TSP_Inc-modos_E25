@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart'; 
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/login_viewmodel.dart';
 import '../views/register_screen.dart';
@@ -58,29 +58,31 @@ class _LoginScreenState extends State<LoginScreen> {
                       return loginViewModel.isLoading
                           ? const CircularProgressIndicator()
                           : ElevatedButton(
-                              style: _buttonStyle(),
-                              onPressed: () async {
-                                final loginMessage = await loginViewModel.login(
-                                  emailController.text,
-                                  passwordController.text,
+                            style: _buttonStyle(),
+                            onPressed: () async {
+                              final loginMessage = await loginViewModel.login(
+                                emailController.text,
+                                passwordController.text,
+                              );
+
+                              if (loginMessage == null) {
+                                // Si el login es exitoso, navega a la pantalla correspondiente
+                                loginViewModel.navigateToAppropriateScreen(
+                                  context,
+                                  loginViewModel.isCollector,
                                 );
-
-                                if (loginMessage == null) {
-                                  // Si el login es exitoso, navega a la pantalla correspondiente
-                                  loginViewModel.navigateToAppropriateScreen(
-                                    context,
-                                    loginViewModel.isCollector,
-
-                                  );
-                                } else {
-                                  // Si hay un error, se muestra el mensaje
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text(loginMessage)),
-                                  );
-                                }
-                              },
-                              child: const Text("INICIAR SESIÓN", style: TextStyle(color: Colors.white)),
-                            );
+                              } else {
+                                // Si hay un error, se muestra el mensaje
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text(loginMessage)),
+                                );
+                              }
+                            },
+                            child: const Text(
+                              "INICIAR SESIÓN",
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          );
                     },
                   ),
                   const SizedBox(height: 10),
@@ -88,13 +90,21 @@ class _LoginScreenState extends State<LoginScreen> {
                     builder: (context, loginViewModel, child) {
                       return ElevatedButton(
                         style: _buttonStyle().copyWith(
-                          backgroundColor: WidgetStateProperty.all(Colors.green.shade600),
+                          backgroundColor: WidgetStateProperty.all(
+                            Colors.green.shade600,
+                          ),
                         ),
-                        onPressed: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => RegisterScreen()),
+                        onPressed:
+                            () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => RegisterScreen(),
+                              ),
+                            ),
+                        child: const Text(
+                          "REGISTRARSE",
+                          style: TextStyle(color: Colors.white),
                         ),
-                        child: const Text("REGISTRARSE", style: TextStyle(color: Colors.white)),
                       );
                     },
                   ),

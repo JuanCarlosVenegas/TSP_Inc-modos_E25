@@ -22,7 +22,6 @@ class LocationService {
       // Espera a que la ubicación esté disponible
       LocationData locationData = await _location.getLocation();
       return LatLng(locationData.latitude!, locationData.longitude!);
-
     } catch (e) {
       print("Error al obtener la ubicación: $e");
       return null; // Devuelve null si ocurre un error.

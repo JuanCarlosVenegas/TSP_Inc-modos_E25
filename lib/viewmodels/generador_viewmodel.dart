@@ -89,7 +89,6 @@ class PickupRequestViewModel extends ChangeNotifier {
         speedAccuracy: 1.0,
       );
 
-
       // Actualizamos la dirección de la ubicación predeterminada
       await updateAddressFromPosition(currentPosition!);
     }
@@ -98,7 +97,6 @@ class PickupRequestViewModel extends ChangeNotifier {
     isLoading = false;
     _safeNotify();
   }
-
 
   void toggleWasteForm(bool show) {
     showWasteForm = show;
@@ -132,10 +130,14 @@ class PickupRequestViewModel extends ChangeNotifier {
 
   String get sizeLabel {
     switch (size) {
-      case 1: return "Pequeño";
-      case 2: return "Mediano";
-      case 3: return "Grande";
-      default: return "Desconocido";
+      case 1:
+        return "Pequeño";
+      case 2:
+        return "Mediano";
+      case 3:
+        return "Grande";
+      default:
+        return "Desconocido";
     }
   }
 
@@ -224,7 +226,6 @@ class PickupRequestViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-
   void _showSuccess(String message) {
     final context = locationFocusNode.context;
     if (context != null) {
@@ -255,13 +256,15 @@ class PickupRequestViewModel extends ChangeNotifier {
       altitude: 0, // Asumiendo que no tienes datos de altitud
       altitudeAccuracy: 0, // Valor por defecto si no tienes datos
       heading: 0, // Valor por defecto si no tienes datos de orientación
-      headingAccuracy: 0, // Valor por defecto si no tienes datos de precisión de orientación
+      headingAccuracy:
+          0, // Valor por defecto si no tienes datos de precisión de orientación
       speed: 0, // O usa la velocidad actual si tienes datos
       speedAccuracy: 0, // O usa precisión de velocidad si tienes datos
     );
     notifyListeners();
     updateAddressFromPosition(currentPosition!);
   }
+
   Future<void> updateAddressFromPosition(Position position) async {
     try {
       List<Placemark> placemarks = await placemarkFromCoordinates(
