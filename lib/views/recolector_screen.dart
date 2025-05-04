@@ -237,7 +237,17 @@ class PendingRequestsScreen extends StatelessWidget {
                               color: Colors.grey[800],
                               tooltip: 'Enviar notificación',
                               onPressed: () {
-                                // Aquí se implementará la notificación más adelante
+                                // Llamar al método en el ViewModel para enviar la notificación
+                                vm.sendNotification(
+                                  userId: request.userId,  // ID del usuario
+                                  requestId: request.requestId,  // ID de la solicitud generado por Firebase
+                                  tipo: 'recolector_llego',  // Tipo de notificación
+                                );
+                                
+                                // Opcional: Mostrar un snackbar o cualquier otra acción
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Notificación enviada exitosamente')),
+                                );
                               },
                             ),
                           ],

@@ -4,13 +4,16 @@ import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/recoleccion_model.dart';
+import '../models/notification_model.dart';
 import '../services/solicitud_service.dart';
+import '../services/notification_service.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geocoding/geocoding.dart';
 
 class PickupRequestViewModel extends ChangeNotifier {
   final String userId;
   final PickupRequestService _service = PickupRequestService();
+  final NotificationService _notificationService = NotificationService();
 
   bool _isDisposed = false;
   final locationFocusNode = FocusNode();
@@ -320,9 +323,23 @@ class PickupRequestViewModel extends ChangeNotifier {
     }
   }
 
-  // Función para cerrar sesión
-  void logout() {
-    // Lógica para cerrar sesión, tal vez borrando datos locales o similar
-    // No olvides llamar a notifyListeners() si necesitas actualizar la UI
-  }
+    // Función para cerrar sesión
+    void logout() {
+      // Lógica para cerrar sesión, tal vez borrando datos locales o similar
+      // No olvides llamar a notifyListeners() si necesitas actualizar la UI
+    }
+
+    Future<List<NotificationModel>> loadUnreadNotifications(String userId) {
+      return _notificationService.getUserNotifications(userId);
+    }
+
+
+  String timeAgo(DateTime date) {
+  final difference = DateTime.now().difference(date);
+
+  if (difference.inSeconds < 60) return 'Justo ahora';
+  if (difference.inMinutes < 60) return '${difference.inMinutes} min';
+  if (difference.inHours < 24) return '${difference.inHours} h';
+  return '${difference.inDays} d';
+}
 }

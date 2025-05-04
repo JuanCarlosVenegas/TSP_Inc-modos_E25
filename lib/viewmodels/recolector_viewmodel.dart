@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'dart:math';
 import '../models/recoleccion_model.dart';
+import '../models/notification_model.dart';
 import '../services/solicitud_service.dart';
 import '../services/location_service.dart';
+import '../services/notification_service.dart';
 import '../views/login_screen.dart';
 import 'package:geocoding/geocoding.dart';
 
@@ -12,6 +14,7 @@ import 'package:geocoding/geocoding.dart';
 class PendingRequestsViewModel extends ChangeNotifier {
   final PickupRequestService _service = PickupRequestService();
   final String collectorId;
+  final NotificationService _notificationService = NotificationService();
 
   PendingRequestsViewModel({required this.collectorId});
 
@@ -236,5 +239,37 @@ class PendingRequestsViewModel extends ChangeNotifier {
     } catch (e) {
       return 'Error al obtener la dirección: $e';
     }
+  }
+
+  Future<void> sendNotification({
+    required String userId,
+    required String requestId,
+    required String tipo,
+  }) async {
+    // Crear el mensaje según el tipo de notificación
+    String message;
+    if (tipo == 'recolector_llego') {
+      message = "El recolector ha llegado a tu dirección de recolección";
+    } else if (tipo == 'basura_desechada') {
+      message = "La basura ha sido desechada correctamente.";
+    } else {
+      message = "Notificación de recolección de basura.";
+    }
+
+    // Crear el modelo de notificación
+    final notification = NotificationModel(
+      userId: userId,
+      message: message,
+      timestamp: Timestamp.now(),
+      isRead: false,
+      requestId: requestId,
+      tipo: tipo,
+    );
+
+    // Guardar la notificación
+    await _notificationService.saveNotification(notification);
+
+    // Notificar a los listeners (si es necesario)
+    notifyListeners();
   }
 }
