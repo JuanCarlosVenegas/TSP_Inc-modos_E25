@@ -84,7 +84,7 @@ class PickupRequest {
     DateTime? createdAt,
     String? collectorId,
     List<String>? imageUrls,
-    double? distance, // nuevo
+    double? distance, 
   }) {
     return PickupRequest(
       requestId: requestId ?? this.requestId,

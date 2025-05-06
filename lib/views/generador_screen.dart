@@ -4,6 +4,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../viewmodels/generador_viewmodel.dart';
 import '../widgets/custom_map.dart';
 import '../views/login_screen.dart';
+import '../views/notification_screen.dart';
 import '../models/notification_model.dart';
 import 'package:flutter_multi_formatter/flutter_multi_formatter.dart';
 
@@ -14,220 +15,304 @@ class RequestPickupScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-  return ChangeNotifierProvider(
-    create: (_) => PickupRequestViewModel(userId: userId),
-    child: Consumer<PickupRequestViewModel>(
-      builder: (context, vm, _) {
-        return Scaffold(
-          appBar: PreferredSize(
-            preferredSize: const Size.fromHeight(kToolbarHeight),
-            child: Builder(
-              builder: (context) {
-                OverlayEntry? _overlayEntry;
-                bool _isOverlayVisible = false;
-                int notificationCount = 2; // Este debería ser el número de notificaciones no leídas
+    return ChangeNotifierProvider(
+      create: (_) => PickupRequestViewModel(userId: userId),
+      child: Consumer<PickupRequestViewModel>(
+        builder: (context, vm, _) {
+          return Scaffold(
+            appBar: PreferredSize(
+              preferredSize: const Size.fromHeight(kToolbarHeight),
+              child: Builder(
+                builder: (context) {
+                  OverlayEntry? overlayEntry;
+                  bool isOverlayVisible = false;
+                  int notificationCount =
+                      2; // Este debería ser el número de notificaciones no leídas
 
-                void _removeOverlay() {
-                  _overlayEntry?.remove();
-                  _overlayEntry = null;
-                  _isOverlayVisible = false;
-                }
-
-                void _toggleOverlay() {
-                  if (_isOverlayVisible) {
-                    _removeOverlay();
-                  } else {
-                    _overlayEntry = OverlayEntry(
-                      builder: (context) => Stack(
-                        children: [
-                          GestureDetector(
-                            onTap: () {
-                              _removeOverlay();
-                            },
-                            behavior: HitTestBehavior.translucent,
-                            child: Container(color: Colors.transparent),
-                          ),
-                          Positioned(
-                            top: kToolbarHeight + 10,
-                            right: 10,
-                            width: 260,
-                            child: Material(
-                              elevation: 8,
-                              borderRadius: BorderRadius.circular(12),
-                              child: Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(12),
-                                  boxShadow: const [
-                                    BoxShadow(
-                                      color: Colors.black26,
-                                      blurRadius: 10,
-                                      offset: Offset(0, 4),
-                                    ),
-                                  ],
-                                ),
-                                child: FutureBuilder<List<NotificationModel>>(
-                                  future: vm.loadUnreadNotifications(userId),
-                                  builder: (context, snapshot) {
-                                    if (snapshot.connectionState == ConnectionState.waiting) {
-                                      return const Center(child: CircularProgressIndicator());
-                                    }
-
-                                    if (snapshot.hasError) {
-                                      return Center(child: Text('Error: ${snapshot.error}'));
-                                    }
-
-                                    final notifications = snapshot.data ?? [];
-
-                                    if (notifications.isEmpty) {
-                                      return const Text('No hay notificaciones nuevas');
-                                    }
-
-                                    return Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            const Text(
-                                              "Notificaciones",
-                                              style: TextStyle(fontWeight: FontWeight.bold),
-                                            ),
-                                            GestureDetector(
-                                              onTap: () {
-                                                _removeOverlay();
-                                              },
-                                              child: const Icon(Icons.close, size: 20),
-                                            ),
-                                          ],
-                                        ),
-                                        const Divider(),
-                                        ...notifications.map((notification) {
-                                          return ListTile(
-                                            leading: Icon(
-                                              notification.tipo == 'recolector_llego'
-                                                  ? Icons.directions_walk
-                                                  : Icons.check_circle_outline,
-                                            ),
-                                            title: Text(notification.tipo == 'recolector_llego'
-                                                ? 'Recolector ha llegado'
-                                                : 'Basura desechada'),
-                                            subtitle: Text(notification.message),
-                                            trailing: Text(
-                                              vm.timeAgo(notification.timestamp.toDate()),
-                                              style: const TextStyle(fontSize: 12, color: Colors.grey),
-                                            ),
-                                            onTap: () async {
-                                              // Marcar la notificación como leída
-                                             // await vm.markAsRead(notification.id);
-                                            },
-                                          );
-                                        }).toList(),
-                                      ],
-                                    );
-                                  },
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                    Overlay.of(context).insert(_overlayEntry!);
-                    _isOverlayVisible = true;
+                  void removeOverlay() {
+                    overlayEntry?.remove();
+                    overlayEntry = null;
+                    isOverlayVisible = false;
                   }
-                }
 
-                return AppBar(
-                  backgroundColor: Colors.green,
-                  title: Row(
-                    children: [
-                      Image.asset('assets/locoEcoRide.png', height: 30),
-                      const SizedBox(width: 10),
-                      const Text("EcoRide", style: TextStyle(color: Colors.white)),
-                    ],
-                  ),
-                  actions: [
-                    StatefulBuilder(
-                      builder: (context, setState) {
-                        return Stack(
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.notifications, color: Colors.white),
-                              onPressed: () {
-                                setState(() {
-                                  _toggleOverlay();
-                                });
-                              },
-                            ),
-                            if (notificationCount > 0)
-                              Positioned(
-                                right: 6,
-                                top: 6,
-                                child: Container(
-                                  padding: const EdgeInsets.all(2),
-                                  decoration: BoxDecoration(
-                                    color: Colors.red,
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-                                  child: Text(
-                                    '$notificationCount',
-                                    style: const TextStyle(color: Colors.white, fontSize: 10),
-                                    textAlign: TextAlign.center,
+                  // void toggleOverlay() {
+                  //   if (isOverlayVisible) {
+                  //     removeOverlay();
+                  //   } else {
+                  //     overlayEntry = OverlayEntry(
+                  //       builder:
+                  //           (context) => Stack(
+                  //             children: [
+                  //               GestureDetector(
+                  //                 onTap: () {
+                  //                   removeOverlay();
+                  //                 },
+                  //                 behavior: HitTestBehavior.translucent,
+                  //                 child: Container(color: Colors.transparent),
+                  //               ),
+                  //               Positioned(
+                  //                 top: kToolbarHeight + 10,
+                  //                 right: 10,
+                  //                 width: 260,
+                  //                 child: Material(
+                  //                   elevation: 8,
+                  //                   borderRadius: BorderRadius.circular(12),
+                  //                   child: Container(
+                  //                     padding: const EdgeInsets.all(12),
+                  //                     decoration: BoxDecoration(
+                  //                       color: Colors.white,
+                  //                       borderRadius: BorderRadius.circular(12),
+                  //                       boxShadow: const [
+                  //                         BoxShadow(
+                  //                           color: Colors.black26,
+                  //                           blurRadius: 10,
+                  //                           offset: Offset(0, 4),
+                  //                         ),
+                  //                       ],
+                  //                     ),
+                  //                     child: FutureBuilder<
+                  //                       List<NotificationModel>
+                  //                     >(
+                  //                       future: vm.loadUnreadNotifications(
+                  //                         userId,
+                  //                       ),
+                  //                       builder: (context, snapshot) {
+                  //                         if (snapshot.connectionState ==
+                  //                             ConnectionState.waiting) {
+                  //                           return const Center(
+                  //                             child:
+                  //                                 CircularProgressIndicator(),
+                  //                           );
+                  //                         }
+
+                  //                         if (snapshot.hasError) {
+                  //                           return Center(
+                  //                             child: Text(
+                  //                               'Error: ${snapshot.error}',
+                  //                             ),
+                  //                           );
+                  //                         }
+
+                  //                         final notifications =
+                  //                             snapshot.data ?? [];
+
+                  //                         if (notifications.isEmpty) {
+                  //                           return const Text(
+                  //                             'No hay notificaciones nuevas',
+                  //                           );
+                  //                         }
+
+                  //                         return Column(
+                  //                           mainAxisSize: MainAxisSize.min,
+                  //                           crossAxisAlignment:
+                  //                               CrossAxisAlignment.start,
+                  //                           children: [
+                  //                             Row(
+                  //                               mainAxisAlignment:
+                  //                                   MainAxisAlignment
+                  //                                       .spaceBetween,
+                  //                               children: [
+                  //                                 const Text(
+                  //                                   "Notificaciones",
+                  //                                   style: TextStyle(
+                  //                                     fontWeight:
+                  //                                         FontWeight.bold,
+                  //                                   ),
+                  //                                 ),
+                  //                                 GestureDetector(
+                  //                                   onTap: () {
+                  //                                     removeOverlay();
+                  //                                   },
+                  //                                   child: const Icon(
+                  //                                     Icons.close,
+                  //                                     size: 20,
+                  //                                   ),
+                  //                                 ),
+                  //                               ],
+                  //                             ),
+                  //                             const Divider(),
+                  //                             ...notifications.map((
+                  //                               notification,
+                  //                             ) {
+                  //                               return ListTile(
+                  //                                 leading: Icon(
+                  //                                   notification.tipo ==
+                  //                                           'recolector_llego'
+                  //                                       ? Icons.directions_walk
+                  //                                       : Icons
+                  //                                           .check_circle_outline,
+                  //                                 ),
+                  //                                 title: Text(
+                  //                                   notification.tipo ==
+                  //                                           'recolector_llego'
+                  //                                       ? 'Recolector ha llegado'
+                  //                                       : 'Basura desechada',
+                  //                                 ),
+                  //                                 subtitle: Text(
+                  //                                   notification.message,
+                  //                                 ),
+                  //                                 trailing: Text(
+                  //                                   vm.timeAgo(
+                  //                                     notification.timestamp
+                  //                                         .toDate(),
+                  //                                   ),
+                  //                                   style: const TextStyle(
+                  //                                     fontSize: 12,
+                  //                                     color: Colors.grey,
+                  //                                   ),
+                  //                                 ),
+                  //                                 onTap: () async {
+                  //                                   // Marcar la notificación como leída
+                  //                                   // await vm.markAsRead(notification.id);
+                  //                                 },
+                  //                               );
+                  //                             }),
+                  //                           ],
+                  //                         );
+                  //                       },
+                  //                     ),
+                  //                   ),
+                  //                 ),
+                  //               ),
+                  //             ],
+                  //           ),
+                  //     );
+                  //     Overlay.of(context).insert(overlayEntry!);
+                  //     isOverlayVisible = true;
+                  //   }
+                  // }
+
+                  return AppBar(
+                    backgroundColor: Colors.green,
+                    title: Row(
+                      children: [
+                        Image.asset('assets/locoEcoRide.png', height: 30),
+                        const SizedBox(width: 10),
+                        const Text(
+                          "EcoRide",
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ],
+                    ),
+                    actions: [
+                      StatefulBuilder(
+                        builder: (context, setState) {
+                          return Stack(
+                            children: [
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.notifications,
+                                  color: Colors.white,
+                                ),
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder:
+                                          (_) => NotificationCenterScreen(
+                                            userId: userId,
+                                          ),
+                                    ),
+                                  );
+                                },
+                              ),
+                              if (notificationCount > 0)
+                                Positioned(
+                                  right: 6,
+                                  top: 6,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    constraints: const BoxConstraints(
+                                      minWidth: 16,
+                                      minHeight: 16,
+                                    ),
+                                    child: Text(
+                                      '$notificationCount',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
                                   ),
                                 ),
-                              ),
-                          ],
-                        );
-                      },
-                    ),
-                  ],
-                );
-              },
-            ),
-          ),
-
-          // El resto de la pantalla sigue igual
-          body: Column(
-            children: [
-              SizedBox(
-                height: 350,
-                child: vm.isLoading || vm.currentPosition == null
-                    ? const Center(child: CircularProgressIndicator())
-                    : MapWidget(
-                        position: LatLng(vm.currentPosition!.latitude, vm.currentPosition!.longitude),
-                        onMapCreated: (_) {},
-                        onMapTapped: (LatLng latLng) {
-                          vm.updateLocation(latLng);
+                            ],
+                          );
                         },
                       ),
+                    ],
+                  );
+                },
               ),
-              Expanded(
-                child: Container(
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                  ),
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(16),
-                    child: vm.showWasteForm
-                        ? _buildWasteForm(context, vm)
-                        : _buildMainForm(context, vm),
+            ),
+
+            // El resto de la pantalla sigue igual
+            body: Column(
+              children: [
+                SizedBox(
+                  height: 350,
+                  child:
+                      vm.isLoading || vm.currentPosition == null
+                          ? const Center(child: CircularProgressIndicator())
+                          : MapWidget(
+                            position: LatLng(
+                              vm.currentPosition!.latitude,
+                              vm.currentPosition!.longitude,
+                            ),
+                            onMapCreated: (_) {},
+                            onMapTapped: (LatLng latLng) {
+                              vm.updateLocation(latLng);
+                            },
+                          ),
+                ),
+                Expanded(
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(20),
+                      ),
+                    ),
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(16),
+                      child:
+                          vm.showWasteForm
+                              ? _buildWasteForm(context, vm)
+                              : _buildMainForm(context, vm),
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        );
-      },
-    ),
-  );
-}
-
-
+              ],
+            ),
+            bottomNavigationBar: BottomNavigationBar(
+              currentIndex:
+                  0, // 0 indica que estamos en la sección actual "Rait"
+              selectedItemColor: Colors.green,
+              onTap: (index) {
+                if (index == 1) {
+                  vm.logout(context);
+                }
+              },
+              items: const [
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.local_shipping),
+                  label: 'Ride',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.logout),
+                  label: 'Cerrar sesión',
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
 
   Widget _buildMainForm(BuildContext context, PickupRequestViewModel vm) {
     return Column(

@@ -112,7 +112,7 @@ class PendingRequestsScreen extends StatelessWidget {
                   items: const [
                     BottomNavigationBarItem(
                       icon: Icon(Icons.view_list),
-                      label: 'Recolector',
+                      label: 'Recolecciones',
                     ),
                     BottomNavigationBarItem(
                       icon: Icon(Icons.logout),

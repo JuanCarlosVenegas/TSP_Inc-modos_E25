@@ -14,7 +14,7 @@ class NotificationModel {
     required this.timestamp,
     required this.isRead,
     required this.requestId,
-    required this.tipo, // Se pasa el tipo de notificación
+    required this.tipo, 
   });
 
   // Convierte el modelo a un mapa JSON para Firestore
@@ -25,7 +25,7 @@ class NotificationModel {
       'timestamp': timestamp,
       'isRead': isRead,
       'requestId': requestId,
-      'tipo': tipo, // Incluir el tipo en el JSON
+      'tipo': tipo, 
     };
   }
 
@@ -39,7 +39,7 @@ class NotificationModel {
       timestamp: data['timestamp'],
       isRead: data['isRead'],
       requestId: data['requestId'],
-      tipo: data['tipo'], // Asignar el tipo
+      tipo: data['tipo'], 
     );
   }
 }

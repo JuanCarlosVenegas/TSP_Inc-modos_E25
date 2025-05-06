@@ -7,6 +7,7 @@ import '../models/recoleccion_model.dart';
 import '../models/notification_model.dart';
 import '../services/solicitud_service.dart';
 import '../services/notification_service.dart';
+import '../views/login_screen.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geocoding/geocoding.dart';
 
@@ -28,14 +29,6 @@ class PickupRequestViewModel extends ChangeNotifier {
       }
     });
   }
-
-  // No olvides llamar a dispose para liberar recursos
-  // @override
-  // void dispose() {
-  //   locationFocusNode.dispose();
-  //   locationController.dispose();
-  //   super.dispose();
-  // }
 
   final locationController = TextEditingController();
   final timeController = TextEditingController();
@@ -92,7 +85,6 @@ class PickupRequestViewModel extends ChangeNotifier {
         speedAccuracy: 1.0,
       );
 
-
       // Actualizamos la dirección de la ubicación predeterminada
       await updateAddressFromPosition(currentPosition!);
     }
@@ -101,7 +93,6 @@ class PickupRequestViewModel extends ChangeNotifier {
     isLoading = false;
     _safeNotify();
   }
-
 
   void toggleWasteForm(bool show) {
     showWasteForm = show;
@@ -135,10 +126,14 @@ class PickupRequestViewModel extends ChangeNotifier {
 
   String get sizeLabel {
     switch (size) {
-      case 1: return "Pequeño";
-      case 2: return "Mediano";
-      case 3: return "Grande";
-      default: return "Desconocido";
+      case 1:
+        return "Pequeño";
+      case 2:
+        return "Mediano";
+      case 3:
+        return "Grande";
+      default:
+        return "Desconocido";
     }
   }
 
@@ -219,14 +214,8 @@ class PickupRequestViewModel extends ChangeNotifier {
     locationController.clear();
     timeController.clear();
     amountController.clear();
-    // quantity = 1;
-    // quantityController.text = '1';
-    // sizeValue = 1;
-    // selectedWasteType = ''; // o null
-    // selectedImages.clear();
     notifyListeners();
   }
-
 
   void _showSuccess(String message) {
     final context = locationFocusNode.context;
@@ -258,13 +247,15 @@ class PickupRequestViewModel extends ChangeNotifier {
       altitude: 0, // Asumiendo que no tienes datos de altitud
       altitudeAccuracy: 0, // Valor por defecto si no tienes datos
       heading: 0, // Valor por defecto si no tienes datos de orientación
-      headingAccuracy: 0, // Valor por defecto si no tienes datos de precisión de orientación
+      headingAccuracy:
+          0, // Valor por defecto si no tienes datos de precisión de orientación
       speed: 0, // O usa la velocidad actual si tienes datos
       speedAccuracy: 0, // O usa precisión de velocidad si tienes datos
     );
     notifyListeners();
     updateAddressFromPosition(currentPosition!);
   }
+
   Future<void> updateAddressFromPosition(Position position) async {
     try {
       List<Placemark> placemarks = await placemarkFromCoordinates(
@@ -323,23 +314,24 @@ class PickupRequestViewModel extends ChangeNotifier {
     }
   }
 
-    // Función para cerrar sesión
-    void logout() {
-      // Lógica para cerrar sesión, tal vez borrando datos locales o similar
-      // No olvides llamar a notifyListeners() si necesitas actualizar la UI
-    }
+  // Función para cerrar sesión
+  void logout(BuildContext context) {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => LoginScreen()),
+    );
+  }
 
-    Future<List<NotificationModel>> loadUnreadNotifications(String userId) {
-      return _notificationService.getUserNotifications(userId);
-    }
-
+  Future<List<NotificationModel>> loadUnreadNotifications(String userId) {
+    return _notificationService.getUserNotifications(userId);
+  }
 
   String timeAgo(DateTime date) {
-  final difference = DateTime.now().difference(date);
+    final difference = DateTime.now().difference(date);
 
-  if (difference.inSeconds < 60) return 'Justo ahora';
-  if (difference.inMinutes < 60) return '${difference.inMinutes} min';
-  if (difference.inHours < 24) return '${difference.inHours} h';
-  return '${difference.inDays} d';
-}
+    if (difference.inSeconds < 60) return 'Justo ahora';
+    if (difference.inMinutes < 60) return '${difference.inMinutes} min';
+    if (difference.inHours < 24) return '${difference.inHours} h';
+    return '${difference.inDays} d';
+  }
 }
