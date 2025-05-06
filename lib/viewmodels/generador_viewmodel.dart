@@ -196,7 +196,7 @@ class PickupRequestViewModel extends ChangeNotifier {
       // También puedes mostrar un mensaje de éxito si quieres
       _showSuccess("¡Solicitud enviada con éxito!");
     } catch (e) {
-      print("Error al confirmar la solicitud: $e");
+    //  print("Error al confirmar la solicitud: $e");
       _showError("Hubo un error al guardar la solicitud.");
     }
   }

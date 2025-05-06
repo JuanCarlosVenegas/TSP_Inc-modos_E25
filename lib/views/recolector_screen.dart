@@ -1,17 +1,23 @@
+// views/pending_requests_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../viewmodels/recolector_viewmodel.dart';
-import '../models/recoleccion_model.dart';
+import '../widgets/solicitudes_recoleccion.dart';
 
 class PendingRequestsScreen extends StatelessWidget {
   final String collectorId;
+
   const PendingRequestsScreen({super.key, required this.collectorId});
+
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => PendingRequestsViewModel(collectorId: collectorId)..loadPendingRequests(),
+      create:
+          (_) =>
+              PendingRequestsViewModel(collectorId: collectorId)
+                ..loadPendingRequests(),
       child: Consumer<PendingRequestsViewModel>(
         builder: (context, vm, _) {
           if (vm.isLoading || vm.initialPosition == null) {
@@ -21,6 +27,16 @@ class PendingRequestsScreen extends StatelessWidget {
           }
 
           return Scaffold(
+            appBar: AppBar(
+              backgroundColor: Colors.green,
+              title: Row(
+                children: [
+                  Image.asset('assets/locoEcoRide.png', height: 30),
+                  const SizedBox(width: 10),
+                  const Text("EcoRide", style: TextStyle(color: Colors.white)),
+                ],
+              ),
+            ),
             body: Stack(
               children: [
                 GoogleMap(
@@ -54,238 +70,30 @@ class PendingRequestsScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-                DraggableScrollableSheet(
-                  initialChildSize: 0.3,
-                  minChildSize: 0.2,
-                  maxChildSize: 0.85,
-                  builder: (context, scrollController) {
-                    return Container(
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                        boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 5)],
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Center(
-                            child: Text(
-                              "Solicitudes de recolección",
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          Expanded(
-                            child: ListView.builder(
-                              controller: scrollController,
-                              itemCount: vm.pendingRequests.length,
-                              itemBuilder: (context, index) {
-                                final request = vm.pendingRequests[index];
-                                return _buildRequestCard(request, vm);
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
+                DraggableRequestsSheet(viewModel: vm),
               ],
             ),
-            bottomNavigationBar: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Divider(
-                  height: 1,
-                  thickness: 1,
-                  color: Colors.green,
+            bottomNavigationBar: BottomNavigationBar(
+              backgroundColor: Colors.white,
+              selectedItemColor: Colors.green,
+              unselectedItemColor: Colors.black54,
+              items: const [
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.view_list),
+                  label: 'Recolecciones',
                 ),
-                BottomNavigationBar(
-                  backgroundColor: Colors.white,
-                  selectedItemColor: Colors.green,
-                  unselectedItemColor: Colors.black54,
-                  items: const [
-                    BottomNavigationBarItem(
-                      icon: Icon(Icons.view_list),
-                      label: 'Recolecciones',
-                    ),
-                    BottomNavigationBarItem(
-                      icon: Icon(Icons.logout),
-                      label: 'Cerrar sesión',
-                    ),
-                  ],
-                  onTap: (index) async {
-                    if (index == 0) {
-                      debugPrint("Navegar a pantalla de recolector");
-                    } else if (index == 1) {
-                      vm.logout(context);
-                    }
-                  },
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.logout),
+                  label: 'Cerrar sesión',
                 ),
               ],
+              onTap: (index) {
+                if (index == 1) vm.logout(context);
+              },
             ),
           );
         },
       ),
     );
   }
-
-  Widget _buildRequestCard(PickupRequest request, PendingRequestsViewModel vm) {
-    return FutureBuilder<String>(
-      future: vm.getAddressFromCoordinates(request.location.latitude, request.location.longitude),
-      builder: (context, snapshot) {
-        String address = 'Cargando dirección...';
-        if (snapshot.connectionState == ConnectionState.done) {
-          if (snapshot.hasError) {
-            address = 'Error al obtener dirección';
-          } else {
-            address = snapshot.data ?? 'Dirección no encontrada';
-          }
-        }
-
-        return GestureDetector(
-          onTap: () => vm.selectRequest(request.requestId),
-          child: Card(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          elevation: 4,
-          margin: const EdgeInsets.symmetric(vertical: 10),
-          color: request.status == 'en recolección'
-            ? const Color(0xFFFFF9C4) // amarillo claro
-            : const Color(0xFFE8F5E9), // verde claro para pendientes
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Datos de la solicitud
-                Expanded(
-                  flex: 2,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("📍 $address",  // Mostrar la dirección
-                          style: const TextStyle(fontWeight: FontWeight.bold)),
-                       /// 💡 Aquí agregamos la distancia
-                      if (request.distance != null)
-                        Text(
-                          "📏 Distancia: ${vm.formatDistance(request.distance)}",
-                          style: const TextStyle(color: Colors.grey),
-                        ),
-                      const SizedBox(height: 6),
-                      Text("🕒 Hora: ${request.time}"),
-                      Text("♻️ Tipo: ${request.wasteType}"),
-                      Text("🔢 Cantidad: ${request.quantity}"),
-                      Text("📦 Tamaño: ${request.size}"),
-                      
-                      const SizedBox(height: 12),
-                      Text(
-                        "💰 Monto: ${request.amount}",
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      if (request.status == 'pendiente')
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            onPressed: () async {
-                              await vm.acceptRequest(request);
-                            },
-                            icon: const Icon(Icons.check_circle_outline),
-                            label: const Text("Aceptar solicitud"),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF388E3C),
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                          ),
-                        )
-                      else
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 8, horizontal: 12),
-                              decoration: BoxDecoration(
-                                color: Colors.grey[200],
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.grey.shade400),
-                              ),
-                              child: const Text(
-                                "En recolección",
-                                style: TextStyle(
-                                  color: Colors.black87,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.notifications_active_outlined),
-                              color: Colors.grey[800],
-                              tooltip: 'Enviar notificación',
-                              onPressed: () {
-                                // Llamar al método en el ViewModel para enviar la notificación
-                                vm.sendNotification(
-                                  userId: request.userId,  // ID del usuario
-                                  requestId: request.requestId,  // ID de la solicitud generado por Firebase
-                                  tipo: 'recolector_llego',  // Tipo de notificación
-                                );
-                                
-                                // Opcional: Mostrar un snackbar o cualquier otra acción
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Notificación enviada exitosamente')),
-                                );
-                              },
-                            ),
-                          ],
-                        ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(width: 12),
-
-                // Imágenes
-                if (request.imageUrls.isNotEmpty)
-                  Expanded(
-                    flex: 1,
-                    child: Column(
-                      children: request.imageUrls.map((url) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.network(
-                              url,
-                              height: 80,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ));
-      },
-    );
-  }
-
 }
-
