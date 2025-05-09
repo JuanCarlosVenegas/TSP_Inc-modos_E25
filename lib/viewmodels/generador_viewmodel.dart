@@ -12,6 +12,23 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geocoding/geocoding.dart';
 
 class PickupRequestViewModel extends ChangeNotifier {
+
+
+  //Desactiva el boton de regresar que viene por defecto en la parte superior "<-".
+  @override
+  Widget build(BuildContext context) {
+    return WillPopScope(
+      onWillPop: () async => false, // Desactiva botón físico
+      child: Scaffold(
+        appBar: AppBar(
+          automaticallyImplyLeading: false, // Quita el botón "<-"
+          title: Text('Pantalla principal'),
+        ),
+      ),
+    );
+  }
+
+
   final String userId;
   final PickupRequestService _service = PickupRequestService();
   final NotificationService _notificationService = NotificationService();

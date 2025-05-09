@@ -1,3 +1,4 @@
+import 'package:ecoride/views/historial_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -6,16 +7,24 @@ import '../widgets/custom_map.dart';
 import '../widgets/recoleccion_formulario.dart';
 import '../widgets/detalles_formulario.dart';
 import '../widgets/notificacion_icono.dart';
+//import 'historial_screen.dart'; // Asegúrate de tener esta pantalla creada
 
-class RequestPickupScreen extends StatelessWidget {
+class RequestPickupScreen extends StatefulWidget {
   final String userId;
 
   const RequestPickupScreen({super.key, required this.userId});
 
   @override
+  State<RequestPickupScreen> createState() => _RequestPickupScreenState();
+}
+
+class _RequestPickupScreenState extends State<RequestPickupScreen> {
+  int _selectedIndex = 1;
+
+  @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => PickupRequestViewModel(userId: userId),
+      create: (_) => PickupRequestViewModel(userId: widget.userId),
       child: Consumer<PickupRequestViewModel>(
         builder: (context, vm, _) {
           return Scaffold(
@@ -29,51 +38,68 @@ class RequestPickupScreen extends StatelessWidget {
                 ],
               ),
               actions: [
-                NotificationIconWithBadge(userId: userId),
+                NotificationIconWithBadge(userId: widget.userId),
               ],
             ),
-            body: Column(
+            body: IndexedStack(
+              index: _selectedIndex,
               children: [
-                SizedBox(
-                  height: 350,
-                  child: vm.isLoading || vm.currentPosition == null
-                      ? const Center(child: CircularProgressIndicator())
-                      : MapWidget(
-                          position: LatLng(
-                            vm.currentPosition!.latitude,
-                            vm.currentPosition!.longitude,
-                          ),
-                          onMapCreated: (_) {},
-                          onMapTapped: (LatLng latLng) {
-                            vm.updateLocation(latLng);
-                          },
+                HistorialScreen(), // Pantalla de Historial
+                // Pantalla principal de Ride
+                Column(
+                  children: [
+                    SizedBox(
+                      height: 350,
+                      child: vm.isLoading || vm.currentPosition == null
+                          ? const Center(child: CircularProgressIndicator())
+                          : MapWidget(
+                        position: LatLng(
+                          vm.currentPosition!.latitude,
+                          vm.currentPosition!.longitude,
                         ),
-                ),
-                Expanded(
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                        onMapCreated: (_) {},
+                        onMapTapped: (LatLng latLng) {
+                          vm.updateLocation(latLng);
+                        },
+                      ),
                     ),
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(16),
-                      child: vm.showWasteForm
-                          ? WasteDetailsForm(viewModel: vm)
-                          : MainRequestForm(viewModel: vm),
+                    Expanded(
+                      child: Container(
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                        ),
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.all(16),
+                          child: vm.showWasteForm
+                              ? WasteDetailsForm(viewModel: vm)
+                              : MainRequestForm(viewModel: vm),
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
+                // Pantalla vacía o para logout
+                const Center(child: Text('Cerrando sesión...')),
               ],
             ),
             bottomNavigationBar: BottomNavigationBar(
-              currentIndex: 0,
+              currentIndex: _selectedIndex,
               selectedItemColor: Colors.green,
               onTap: (index) {
-                if (index == 1) {
+                if (index == 2) {
                   vm.logout(context);
+                } else {
+                  setState(() {
+                    _selectedIndex = index;
+                  });
                 }
               },
               items: const [
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.history),
+                  label: 'Historial',
+                ),
                 BottomNavigationBarItem(
                   icon: Icon(Icons.local_shipping),
                   label: 'Ride',
