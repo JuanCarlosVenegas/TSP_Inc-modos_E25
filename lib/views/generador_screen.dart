@@ -7,7 +7,6 @@ import '../widgets/custom_map.dart';
 import '../widgets/recoleccion_formulario.dart';
 import '../widgets/detalles_formulario.dart';
 import '../widgets/notificacion_icono.dart';
-//import 'historial_screen.dart'; // Asegúrate de tener esta pantalla creada
 
 class RequestPickupScreen extends StatefulWidget {
   final String userId;
