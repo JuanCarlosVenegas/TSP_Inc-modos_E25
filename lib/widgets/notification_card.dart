@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/notification_model.dart';
+import '../viewmodels/notification_viewmodel.dart';
 
 class NotificationCard extends StatelessWidget {
   final NotificationModel notification;
-  final VoidCallback onClose;
 
-  const NotificationCard({
-    required this.notification,
-    required this.onClose,
-    super.key,
-  });
+  const NotificationCard({required this.notification, super.key});
 
   @override
   Widget build(BuildContext context) {
     final bool isRecolector = notification.tipo == 'recolector_llego';
-
+    final viewModel = Provider.of<NotificationViewModel>(
+      context,
+      listen: false,
+    );
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       margin: const EdgeInsets.symmetric(vertical: 6),
@@ -37,7 +37,16 @@ class NotificationCard extends StatelessWidget {
         ),
         trailing: IconButton(
           icon: const Icon(Icons.close),
-          onPressed: onClose,
+          onPressed: () {
+            final viewModel = Provider.of<NotificationViewModel>(
+              context,
+              listen: false,
+            );
+            viewModel.markAsReadAndRemove(
+              notification.requestId,
+              notification.tipo,
+            );
+          },
         ),
       ),
     );

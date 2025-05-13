@@ -1,31 +1,29 @@
-// views/pending_requests_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-
 import '../viewmodels/recolector_viewmodel.dart';
 import '../widgets/solicitudes_recoleccion.dart';
+import '../views/historial_screen.dart';
 
-class PendingRequestsScreen extends StatelessWidget {
+class PendingRequestsScreen extends StatefulWidget {
   final String collectorId;
 
   const PendingRequestsScreen({super.key, required this.collectorId});
 
   @override
+  State<PendingRequestsScreen> createState() => _PendingRequestsScreenState();
+}
+
+class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
+  int _selectedIndex = 1;
+
+  @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create:
-          (_) =>
-              PendingRequestsViewModel(collectorId: collectorId)
-                ..loadPendingRequests(),
-      child: Consumer<PendingRequestsViewModel>(
+      create: (_) => PendingRequestsViewModel(collectorId: widget.collectorId)
+        ..loadPendingRequests(),
+      child: Consumer<PendingRequestsViewModel>( // Usamos Consumer para acceder al vm
         builder: (context, vm, _) {
-          if (vm.isLoading || vm.initialPosition == null) {
-            return const Scaffold(
-              body: Center(child: CircularProgressIndicator()),
-            );
-          }
-
           return Scaffold(
             appBar: AppBar(
               backgroundColor: Colors.green,
@@ -37,47 +35,25 @@ class PendingRequestsScreen extends StatelessWidget {
                 ],
               ),
             ),
-            body: Stack(
+            body: IndexedStack(
+              index: _selectedIndex,
               children: [
-                GoogleMap(
-                  initialCameraPosition: CameraPosition(
-                    target: vm.initialPosition!,
-                    zoom: 14,
-                  ),
-                  markers: vm.markers,
-                  onMapCreated: vm.setMapController,
-                  myLocationEnabled: true,
-                  myLocationButtonEnabled: true,
-                ),
-                Positioned(
-                  bottom: 150,
-                  right: 16,
-                  child: Column(
-                    children: [
-                      FloatingActionButton(
-                        heroTag: "zoom_in",
-                        onPressed: vm.zoomIn,
-                        mini: true,
-                        child: const Icon(Icons.add),
-                      ),
-                      const SizedBox(height: 8),
-                      FloatingActionButton(
-                        heroTag: "zoom_out",
-                        onPressed: vm.zoomOut,
-                        mini: true,
-                        child: const Icon(Icons.remove),
-                      ),
-                    ],
-                  ),
-                ),
-                DraggableRequestsSheet(viewModel: vm),
+                HistorialScreen(userId: widget.collectorId, filterBy: 'collectorId'),
+                // Aquí iría el contenido de PendingRequests
+                PendingRequestsContent(viewModel: vm), // Usamos el vm para mostrar el contenido
+                const Center(child: Text('Cerrando sesión...')),
               ],
             ),
             bottomNavigationBar: BottomNavigationBar(
               backgroundColor: Colors.white,
               selectedItemColor: Colors.green,
               unselectedItemColor: Colors.black54,
+              currentIndex: _selectedIndex,
               items: const [
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.history),
+                  label: 'Historial',
+                ),
                 BottomNavigationBarItem(
                   icon: Icon(Icons.view_list),
                   label: 'Recolecciones',
@@ -88,12 +64,68 @@ class PendingRequestsScreen extends StatelessWidget {
                 ),
               ],
               onTap: (index) {
-                if (index == 1) vm.logout(context);
+                if (index == 2) {
+                  vm.logout(context); // Llamada al logout desde el viewModel
+                } else {
+                  setState(() {
+                    _selectedIndex = index;
+                  });
+                }
               },
             ),
           );
         },
       ),
+    );
+  }
+}
+
+class PendingRequestsContent extends StatelessWidget {
+  final PendingRequestsViewModel viewModel;
+
+  const PendingRequestsContent({super.key, required this.viewModel});
+
+  @override
+  Widget build(BuildContext context) {
+    if (viewModel.isLoading || viewModel.initialPosition == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return Stack(
+      children: [
+        GoogleMap(
+          initialCameraPosition: CameraPosition(
+            target: viewModel.initialPosition!,
+            zoom: 14,
+          ),
+          markers: viewModel.markers,
+          onMapCreated: viewModel.setMapController,
+          myLocationEnabled: true,
+          myLocationButtonEnabled: true,
+        ),
+        Positioned(
+          bottom: 150,
+          right: 16,
+          child: Column(
+            children: [
+              FloatingActionButton(
+                heroTag: "zoom_in",
+                onPressed: viewModel.zoomIn,
+                mini: true,
+                child: const Icon(Icons.add),
+              ),
+              const SizedBox(height: 8),
+              FloatingActionButton(
+                heroTag: "zoom_out",
+                onPressed: viewModel.zoomOut,
+                mini: true,
+                child: const Icon(Icons.remove),
+              ),
+            ],
+          ),
+        ),
+        DraggableRequestsSheet(viewModel: viewModel),
+      ],
     );
   }
 }

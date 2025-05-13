@@ -36,43 +36,45 @@ class _RequestPickupScreenState extends State<RequestPickupScreen> {
                   const Text("EcoRide", style: TextStyle(color: Colors.white)),
                 ],
               ),
-              actions: [
-                NotificationIconWithBadge(userId: widget.userId),
-              ],
+              actions: [NotificationIconWithBadge(userId: widget.userId)],
             ),
             body: IndexedStack(
               index: _selectedIndex,
               children: [
-                HistorialScreen(), // Pantalla de Historial
+                HistorialScreen(userId: widget.userId, filterBy: 'userId'), // Pantalla de Historial
                 // Pantalla principal de Ride
                 Column(
                   children: [
                     SizedBox(
                       height: 350,
-                      child: vm.isLoading || vm.currentPosition == null
-                          ? const Center(child: CircularProgressIndicator())
-                          : MapWidget(
-                        position: LatLng(
-                          vm.currentPosition!.latitude,
-                          vm.currentPosition!.longitude,
-                        ),
-                        onMapCreated: (_) {},
-                        onMapTapped: (LatLng latLng) {
-                          vm.updateLocation(latLng);
-                        },
-                      ),
+                      child:
+                          vm.isLoading || vm.currentPosition == null
+                              ? const Center(child: CircularProgressIndicator())
+                              : MapWidget(
+                                position: LatLng(
+                                  vm.currentPosition!.latitude,
+                                  vm.currentPosition!.longitude,
+                                ),
+                                onMapCreated: (_) {},
+                                onMapTapped: (LatLng latLng) {
+                                  vm.updateLocation(latLng);
+                                },
+                              ),
                     ),
                     Expanded(
                       child: Container(
                         decoration: const BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                          borderRadius: BorderRadius.vertical(
+                            top: Radius.circular(20),
+                          ),
                         ),
                         child: SingleChildScrollView(
                           padding: const EdgeInsets.all(16),
-                          child: vm.showWasteForm
-                              ? WasteDetailsForm(viewModel: vm)
-                              : MainRequestForm(viewModel: vm),
+                          child:
+                              vm.showWasteForm
+                                  ? WasteDetailsForm(viewModel: vm)
+                                  : MainRequestForm(viewModel: vm),
                         ),
                       ),
                     ),

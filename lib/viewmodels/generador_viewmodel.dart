@@ -200,7 +200,7 @@ class PickupRequestViewModel extends ChangeNotifier {
       wasteType: selectedWasteType,
       quantity: quantity,
       size: sizeLabel,
-      status: 'pendiente',
+      status: 'Pendiente',
       createdAt: DateTime.now(),
       collectorId: null,
       imageUrls: [],

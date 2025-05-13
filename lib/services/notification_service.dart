@@ -29,14 +29,16 @@ class NotificationService {
         .toList();
   }
 
-  /// Marca una notificación como leída usando el ID del documento
-  Future<void> markNotificationAsRead(String notificationId) async {
+  /// Marca una notificación como leída usando el ID del documento de Firebase
+  Future<void> markNotificationAsRead(String documentId) async {
     try {
+      // 🔎 Actualizar el campo "isRead" del documento identificado por el ID
       await _firebaseFirestore
           .collection('notifications')
-          .doc(notificationId)
+          .doc(documentId)
           .update({'isRead': true});
     } catch (e) {
+      print('Error al actualizar la notificación: $e');
       rethrow;
     }
   }
@@ -56,6 +58,49 @@ class NotificationService {
       }
     } catch (e) {
       rethrow;
+    }
+  }
+
+  Future<DocumentSnapshot?> getNotificationDocByRequestId(
+    String requestId,
+  ) async {
+    try {
+      final querySnapshot =
+          await _firebaseFirestore
+              .collection('notifications')
+              .where('requestId', isEqualTo: requestId)
+              .limit(1) // 👈 Limitamos a 1 para optimización
+              .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        return querySnapshot.docs.first;
+      }
+    } catch (e) {
+      print("Error al obtener notificación: $e");
+    }
+    return null;
+  }
+
+  Future<String?> findNotificationByRequestIdAndType(
+    String requestId,
+    String tipo,
+  ) async {
+    try {
+      final querySnapshot =
+          await _firebaseFirestore
+              .collection('notifications')
+              .where('requestId', isEqualTo: requestId)
+              .where('tipo', isEqualTo: tipo)
+              .limit(1)
+              .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        return querySnapshot.docs.first.id;
+      }
+      return null;
+    } catch (e) {
+      print('Error buscando notificación: $e');
+      return null;
     }
   }
 }

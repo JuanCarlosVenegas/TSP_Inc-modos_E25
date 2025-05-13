@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-
 class PickupRequest {
   final String requestId;
   final String userId;
@@ -14,6 +13,10 @@ class PickupRequest {
   final DateTime createdAt;
   String? collectorId;
   final List<String> imageUrls;
+  
+  // ✅ Nuevos atributos para manejar notificaciones enviadas
+  bool recolectorLlegoNotificado;
+  bool pedidoDesechadoNotificado;
 
   /// Campo opcional (no se guarda en Firestore) para calcular distancia
   double? distance;
@@ -32,23 +35,26 @@ class PickupRequest {
     this.collectorId,
     required this.imageUrls,
     this.distance,
+    this.recolectorLlegoNotificado = false, // 🔄 Por defecto en `false`
+    this.pedidoDesechadoNotificado = false, // 🔄 Por defecto en `false`
   });
 
   Map<String, dynamic> toJson() {
     return {
       'requestId': requestId,
       'userId': userId,
-      'location': location, // GeoPoint
+      'location': location,
       'time': time,
       'amount': amount,
       'wasteType': wasteType,
       'quantity': quantity,
       'size': size,
       'status': status,
-      'createdAt': createdAt.toIso8601String(),
+      'createdAt': Timestamp.fromDate(createdAt),
       'collectorId': collectorId,
       'imageUrls': imageUrls,
-      // NOTA: distance no se guarda en Firestore
+      'recolectorLlegoNotificado': recolectorLlegoNotificado, // 🔄 Se añade al JSON
+      'pedidoDesechadoNotificado': pedidoDesechadoNotificado // 🔄 Se añade al JSON
     };
   }
 
@@ -58,19 +64,22 @@ class PickupRequest {
       userId: json['userId'],
       location: json['location'] is GeoPoint
           ? json['location']
-          : GeoPoint(0, 0), // Fallback por si viene mal
+          : GeoPoint(0, 0),
       time: json['time'],
       amount: json['amount'],
       wasteType: json['wasteType'],
       quantity: json['quantity'],
       size: json['size'],
       status: json['status'],
-      createdAt: DateTime.parse(json['createdAt']),
+      createdAt: (json['createdAt'] as Timestamp).toDate(),
       collectorId: json['collectorId'],
       imageUrls: List<String>.from(json['imageUrls'] ?? []),
+      recolectorLlegoNotificado: json['recolectorLlegoNotificado'] ?? false, // 🔄 Trae el valor o false por defecto
+      pedidoDesechadoNotificado: json['pedidoDesechadoNotificado'] ?? false, // 🔄 Trae el valor o false por defecto
     );
   }
 
+  /// 🔄 **Método copyWith actualizado:**
   PickupRequest copyWith({
     String? requestId,
     String? userId,
@@ -84,7 +93,9 @@ class PickupRequest {
     DateTime? createdAt,
     String? collectorId,
     List<String>? imageUrls,
-    double? distance, 
+    double? distance,
+    bool? recolectorLlegoNotificado,
+    bool? pedidoDesechadoNotificado,
   }) {
     return PickupRequest(
       requestId: requestId ?? this.requestId,
@@ -100,6 +111,8 @@ class PickupRequest {
       collectorId: collectorId ?? this.collectorId,
       imageUrls: imageUrls ?? this.imageUrls,
       distance: distance ?? this.distance,
+      recolectorLlegoNotificado: recolectorLlegoNotificado ?? this.recolectorLlegoNotificado,
+      pedidoDesechadoNotificado: pedidoDesechadoNotificado ?? this.pedidoDesechadoNotificado,
     );
   }
 }

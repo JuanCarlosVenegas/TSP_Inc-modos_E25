@@ -1,12 +1,31 @@
-// widgets/draggable_requests_sheet.dart
+import 'package:ecoride/models/recoleccion_model.dart';
 import 'package:flutter/material.dart';
 import '../viewmodels/recolector_viewmodel.dart';
-import 'recuest_card.dart';
+import '../widgets/recuest_card.dart';
 
 class DraggableRequestsSheet extends StatelessWidget {
   final PendingRequestsViewModel viewModel;
 
   const DraggableRequestsSheet({super.key, required this.viewModel});
+
+  /// ✅ Método para aceptar la solicitud y actualizar la lista local
+  Future<void> _handleAcceptRequest(PickupRequest request) async {
+    await viewModel.acceptRequest(request);
+
+    // ✅ Notificación al cliente al aceptar la solicitud
+    await viewModel.sendNotification(
+      userId: request.userId,
+      requestId: request.requestId,
+      tipo: 'recolector_llego',
+      hora: request.time,
+    );
+
+    // ✅ Eliminar la solicitud localmente del ViewModel
+    viewModel.removeRequest(request);
+
+    // ✅ Notificar cambios para actualizar la UI
+    viewModel.notifyListeners();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,14 +52,25 @@ class DraggableRequestsSheet extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               Expanded(
-                child: ListView.builder(
-                  controller: scrollController,
-                  itemCount: viewModel.pendingRequests.length,
-                  itemBuilder: (context, index) {
-                    final request = viewModel.pendingRequests[index];
-                    return RequestCard(request: request, viewModel: viewModel);
-                  },
-                ),
+                child: viewModel.pendingRequests.isEmpty
+                    ? const Center(
+                        child: Text(
+                          'No hay solicitudes pendientes.',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      )
+                    : ListView.builder(
+                        controller: scrollController,
+                        itemCount: viewModel.pendingRequests.length,
+                        itemBuilder: (context, index) {
+                          final request = viewModel.pendingRequests[index];
+                          return RequestCard(
+                            request: request,
+                            viewModel: viewModel,
+                            onAcceptRequest: _handleAcceptRequest,
+                          );
+                        },
+                      ),
               ),
             ],
           ),

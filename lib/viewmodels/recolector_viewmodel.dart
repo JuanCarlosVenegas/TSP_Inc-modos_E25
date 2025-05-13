@@ -10,7 +10,6 @@ import '../services/notification_service.dart';
 import '../views/login_screen.dart';
 import 'package:geocoding/geocoding.dart';
 
-
 class PendingRequestsViewModel extends ChangeNotifier {
   final PickupRequestService _service = PickupRequestService();
   final String collectorId;
@@ -32,7 +31,9 @@ class PendingRequestsViewModel extends ChangeNotifier {
 
   void selectRequest(String requestId) {
     _selectedRequestId = requestId;
-    final selected = _pendingRequests.firstWhere((r) => r.requestId == requestId);
+    final selected = _pendingRequests.firstWhere(
+      (r) => r.requestId == requestId,
+    );
     _mapController?.animateCamera(
       CameraUpdate.newLatLng(_parseLocation(selected.location)),
     );
@@ -45,10 +46,14 @@ class PendingRequestsViewModel extends ChangeNotifier {
 
       // Determina el color según el estado
       BitmapDescriptor markerColor;
-      if (req.status == 'en recolección') {
-        markerColor = BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueYellow);
+      if (req.status == 'Recolección') {
+        markerColor = BitmapDescriptor.defaultMarkerWithHue(
+          BitmapDescriptor.hueYellow,
+        );
       } else if (isSelected) {
-        markerColor = BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen);
+        markerColor = BitmapDescriptor.defaultMarkerWithHue(
+          BitmapDescriptor.hueGreen,
+        );
       } else {
         markerColor = BitmapDescriptor.defaultMarker;
       }
@@ -57,14 +62,10 @@ class PendingRequestsViewModel extends ChangeNotifier {
         markerId: MarkerId(req.requestId),
         position: _parseLocation(req.location),
         icon: markerColor,
-        infoWindow: InfoWindow(
-          title: req.wasteType,
-          snippet: req.amount,
-        ),
+        infoWindow: InfoWindow(title: req.wasteType, snippet: req.amount),
       );
     }).toSet();
   }
-
 
   Future<void> loadPendingRequests() async {
     _isLoading = true;
@@ -78,7 +79,10 @@ class PendingRequestsViewModel extends ChangeNotifier {
       // Si tenemos la ubicación actual, calculamos distancia y ordenamos
       if (currentPosition != null) {
         for (var req in _pendingRequests) {
-          final distance = _calculateDistance(currentPosition, _parseLocation(req.location));
+          final distance = _calculateDistance(
+            currentPosition,
+            _parseLocation(req.location),
+          );
           req.distance = distance;
         }
 
@@ -86,16 +90,22 @@ class PendingRequestsViewModel extends ChangeNotifier {
         _initialPosition = currentPosition;
       }
 
-      // 🔍 Filtrar solicitudes en recolección del recolector logueado
-      var collectingRequests = _pendingRequests.where((req) =>
-          req.status == 'en recolección' && req.collectorId == collectorId).toList();
+      // // 🔍 Filtrar solicitudes en recolección del recolector logueado
+      // var collectingRequests =
+      //     _pendingRequests
+      //         .where(
+      //           (req) =>
+      //               req.status == 'Recolección' &&
+      //               req.collectorId == collectorId,
+      //         )
+      //         .toList();
 
       // 🔍 Filtrar solicitudes pendientes (sin asignar aún)
-      var pendingRequests = _pendingRequests.where((req) => req.status == 'pendiente').toList();
+      var pendingRequests =
+          _pendingRequests.where((req) => req.status == 'Pendiente').toList();
 
       // 🔄 Unir: primero las del recolector, luego las pendientes
-      _pendingRequests = collectingRequests + pendingRequests;
-
+      _pendingRequests = /*collectingRequests +*/ pendingRequests;
     } catch (e) {
       debugPrint('Error al cargar solicitudes pendientes: $e');
     }
@@ -104,6 +114,10 @@ class PendingRequestsViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  // En PendingRequestsViewModel
+  void removeRequest(PickupRequest request) {
+    _pendingRequests.removeWhere((r) => r.requestId == request.requestId);
+  }
 
   void setMapController(GoogleMapController controller) {
     _mapController = controller;
@@ -133,23 +147,30 @@ class PendingRequestsViewModel extends ChangeNotifier {
       // Actualiza la solicitud en Firestore
       await _service.updateRequestStatusAndCollector(
         requestId: request.requestId,
-        status: 'en recolección',
+        status: 'Recolección',
         collectorId: collectorId,
       );
-      
+
       // Cambia el estado de la solicitud localmente
-      request.status = 'en recolección';
+      request.status = 'Recolección';
       request.collectorId = collectorId;
 
       // Actualizar la lista localmente: mover la solicitud "en recolección" al principio
-      _pendingRequests.removeWhere((req) => req.requestId == request.requestId); // Elimina la solicitud antigua
-      _pendingRequests.insert(0, request); // Inserta la solicitud al principio de la lista
+      _pendingRequests.removeWhere(
+        (req) => req.requestId == request.requestId,
+      ); // Elimina la solicitud antigua
+      _pendingRequests.insert(
+        0,
+        request,
+      ); // Inserta la solicitud al principio de la lista
 
       // Reordenar las solicitudes en recolección por hora (si es necesario)
       _pendingRequests.sort((a, b) {
         // Solo ordenar entre las solicitudes "en recolección"
-        if (a.status == 'en recolección' && b.status == 'en recolección') {
-          return _timeStringToMinutes(a.time).compareTo(_timeStringToMinutes(b.time));
+        if (a.status == 'Recolección' && b.status == 'Recolección') {
+          return _timeStringToMinutes(
+            a.time,
+          ).compareTo(_timeStringToMinutes(b.time));
         }
         return 0; // No cambiar el orden de las demás solicitudes
       });
@@ -162,7 +183,9 @@ class PendingRequestsViewModel extends ChangeNotifier {
   }
 
   int _timeStringToMinutes(String time) {
-    final regExp = RegExp(r'(\d+):(\d+) (\w{2})'); // RegExp para capturar hora, minuto y AM/PM
+    final regExp = RegExp(
+      r'(\d+):(\d+) (\w{2})',
+    ); // RegExp para capturar hora, minuto y AM/PM
     final match = regExp.firstMatch(time);
 
     if (match != null) {
@@ -187,19 +210,17 @@ class PendingRequestsViewModel extends ChangeNotifier {
     return 0; // Si el formato es incorrecto o no se puede parsear, devuelve 0
   }
 
-
-
   double _calculateDistance(LatLng from, LatLng to) {
     const earthRadius = 6371000; // en metros
 
     final dLat = _degreesToRadians(to.latitude - from.latitude);
     final dLng = _degreesToRadians(to.longitude - from.longitude);
 
-    final a = 
-      (sin(dLat / 2) * sin(dLat / 2)) +
-      cos(_degreesToRadians(from.latitude)) *
-      cos(_degreesToRadians(to.latitude)) *
-      (sin(dLng / 2) * sin(dLng / 2));
+    final a =
+        (sin(dLat / 2) * sin(dLat / 2)) +
+        cos(_degreesToRadians(from.latitude)) *
+            cos(_degreesToRadians(to.latitude)) *
+            (sin(dLng / 2) * sin(dLng / 2));
 
     final c = 2 * atan2(sqrt(a), sqrt(1 - a));
     return earthRadius * c;
@@ -218,20 +239,27 @@ class PendingRequestsViewModel extends ChangeNotifier {
     }
   }
 
-  Future<String> getAddressFromCoordinates(double latitude, double longitude) async {
+  Future<String> getAddressFromCoordinates(
+    double latitude,
+    double longitude,
+  ) async {
     try {
       // Obtén la dirección a partir de las coordenadas
-      List<Placemark> placemarks = await placemarkFromCoordinates(latitude, longitude);
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        latitude,
+        longitude,
+      );
       if (placemarks.isNotEmpty) {
         Placemark place = placemarks[0];
         // Concatenar la dirección completa
         String address = '';
         if (place.thoroughfare != null) address += place.thoroughfare!;
-        if (place.name != null) address += '${place.name!}, ';       
+        if (place.name != null) address += '${place.name!}, ';
         if (place.subLocality != null) address += '${place.subLocality!}, ';
-        if (place.administrativeArea != null) address += '${place.administrativeArea!}, ';
+        if (place.administrativeArea != null)
+          address += '${place.administrativeArea!}, ';
         if (place.country != null) address += place.country!;
-        
+
         return address;
       } else {
         return 'Dirección no disponible';
@@ -245,13 +273,15 @@ class PendingRequestsViewModel extends ChangeNotifier {
     required String userId,
     required String requestId,
     required String tipo,
+    required String hora,
   }) async {
     // Crear el mensaje según el tipo de notificación
     String message;
     if (tipo == 'recolector_llego') {
-      message = "El recolector ha llegado a tu dirección de recolección";
+      message =
+          "El recolector de tu pedido solicitado a las ${hora} ha llegado a tu dirección de recolección\n ¡Sal a darle tus desechos!";
     } else if (tipo == 'basura_desechada') {
-      message = "La basura ha sido desechada correctamente.";
+      message = "Su pedido ${requestId} ha sido desechado correctamente";
     } else {
       message = "Notificación de recolección de basura.";
     }
