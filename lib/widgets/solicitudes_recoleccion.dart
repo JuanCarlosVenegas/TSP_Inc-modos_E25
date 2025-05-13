@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ecoride/models/recoleccion_model.dart';
 import 'package:flutter/material.dart';
 import '../viewmodels/recolector_viewmodel.dart';
@@ -9,22 +10,29 @@ class DraggableRequestsSheet extends StatelessWidget {
   const DraggableRequestsSheet({super.key, required this.viewModel});
 
   /// ✅ Método para aceptar la solicitud y actualizar la lista local
-  Future<void> _handleAcceptRequest(PickupRequest request) async {
+  /// ✅ Método para aceptar la solicitud y actualizar la lista local
+  Future<void> _handleAcceptRequest(
+    PickupRequest request,
+    BuildContext context,
+  ) async {
     await viewModel.acceptRequest(request);
-
-    // ✅ Notificación al cliente al aceptar la solicitud
-    await viewModel.sendNotification(
-      userId: request.userId,
-      requestId: request.requestId,
-      tipo: 'recolector_llego',
-      hora: request.time,
-    );
 
     // ✅ Eliminar la solicitud localmente del ViewModel
     viewModel.removeRequest(request);
 
     // ✅ Notificar cambios para actualizar la UI
     viewModel.notifyListeners();
+
+    // ✅ Verificar si el contexto aún está montado antes de mostrar el SnackBar
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Recolección aceptada correctamente.'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
   }
 
   @override
@@ -46,31 +54,55 @@ class DraggableRequestsSheet extends StatelessWidget {
             children: [
               const Center(
                 child: Text(
-                  "Solicitudes de recolección",
+                  "Solicitudes pendientes",
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
               const SizedBox(height: 10),
               Expanded(
-                child: viewModel.pendingRequests.isEmpty
-                    ? const Center(
+                child: StreamBuilder<QuerySnapshot>(
+                  stream:
+                      FirebaseFirestore.instance
+                          .collection('pickup_requests')
+                          .where('status', isEqualTo: 'Pendiente')
+                          .snapshots(), // 🔄 Escucha en tiempo real
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                      return const Center(
                         child: Text(
                           'No hay solicitudes pendientes.',
                           style: TextStyle(color: Colors.grey),
                         ),
-                      )
-                    : ListView.builder(
-                        controller: scrollController,
-                        itemCount: viewModel.pendingRequests.length,
-                        itemBuilder: (context, index) {
-                          final request = viewModel.pendingRequests[index];
-                          return RequestCard(
-                            request: request,
-                            viewModel: viewModel,
-                            onAcceptRequest: _handleAcceptRequest,
+                      );
+                    }
+
+                    final requests =
+                        snapshot.data!.docs.map((doc) {
+                          return PickupRequest.fromJson(
+                            doc.data() as Map<String, dynamic>,
                           );
-                        },
-                      ),
+                        }).toList();
+
+                    return ListView.builder(
+                      controller: scrollController,
+                      itemCount: requests.length,
+                      itemBuilder: (context, index) {
+                        final request = requests[index];
+                        return RequestCard(
+                          request: request,
+                          viewModel: viewModel,
+                          onAcceptRequest:
+                              (request) =>
+                                  _handleAcceptRequest(request, context),
+                        );
+                      },
+                    );
+                  },
+                ),
               ),
             ],
           ),

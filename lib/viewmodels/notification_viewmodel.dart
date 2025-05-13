@@ -94,52 +94,67 @@ class NotificationViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Método para enviar la notificación de basura desechada
-  Future<void> sendWasteDisposedNotification(PickupRequest request) async {
-    try {
-      await sendNotification(
-        userId: request.userId,
-        requestId: request.requestId,
-        tipo: 'basura_desechada',
-        hora: request.time,
-      );
+  // Método para mostrar mensajes tipo Snackbar
+void _showSnackbar(BuildContext context, String message) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(message),
+      backgroundColor: Colors.green,
+      duration: const Duration(seconds: 2),
+    ),
+  );
+}
 
-      // Actualiza en Firestore
-      await FirebaseFirestore.instance
-          .collection('pickup_requests')
-          .doc(request.requestId)
-          .update({
-            'pedidoDesechadoNotificado': true,
-            'status': 'Finalizado', // 🔄 Actualización del estado
-          });
+// Método para enviar la notificación de basura desechada
+Future<void> sendWasteDisposedNotification(
+    BuildContext context, PickupRequest request) async {
+  try {
+    await sendNotification(
+      userId: request.userId,
+      requestId: request.requestId,
+      tipo: 'basura_desechada',
+      hora: request.time,
+    );
 
-      // Muestra un mensaje de éxito (puedes manejarlo desde la UI)
-      print('Notificación de basura desechada enviada exitosamente.');
-    } catch (e) {
-      print('Error al enviar notificación de basura desechada: $e');
-    }
+    await FirebaseFirestore.instance
+        .collection('pickup_requests')
+        .doc(request.requestId)
+        .update({
+          'pedidoDesechadoNotificado': true,
+          'status': 'Finalizado',
+        });
+
+    print('✅ Notificación de basura desechada enviada exitosamente.');
+    _showSnackbar(context, 'Notificación de basura desechada enviada.');
+  } catch (e) {
+    print('❌ Error al enviar notificación de basura desechada: $e');
+    _showSnackbar(context, 'Error al enviar la notificación.');
   }
+}
 
-  // Método para enviar la notificación de llegada del recolector
-  Future<void> sendCollectorArrivalNotification(PickupRequest request) async {
-    try {
-      await sendNotification(
-        userId: request.userId,
-        requestId: request.requestId,
-        tipo: 'recolector_llego',
-        hora: request.time,
-      );
+// Método para enviar la notificación de llegada del recolector
+Future<void> sendCollectorArrivalNotification(
+    BuildContext context, PickupRequest request) async {
+  print("⏳ Método sendCollectorArrivalNotification llamado.");
+  try {
+    await sendNotification(
+      userId: request.userId,
+      requestId: request.requestId,
+      tipo: 'recolector_llego',
+      hora: request.time,
+    );
 
-      // Actualiza en Firestore
-      await FirebaseFirestore.instance
-          .collection('pickup_requests')
-          .doc(request.requestId)
-          .update({'recolectorLlegoNotificado': true});
+    await FirebaseFirestore.instance
+        .collection('pickup_requests')
+        .doc(request.requestId)
+        .update({'recolectorLlegoNotificado': true});
 
-      // Muestra un mensaje de éxito (puedes manejarlo desde la UI)
-      print('Notificación de llegada del recolector enviada exitosamente.');
-    } catch (e) {
-      print('Error al enviar notificación de llegada del recolector: $e');
-    }
+    print('✅ Notificación de llegada del recolector enviada exitosamente.');
+    _showSnackbar(context, 'Notificación de llegada al domicilio enviada.');
+  } catch (e) {
+    print('❌ Error al enviar notificación de llegada del recolector: $e');
+    _showSnackbar(context, 'Error al enviar la notificación.');
   }
+}
+
 }

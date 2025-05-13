@@ -14,7 +14,6 @@ class ConfirmCancellation {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Título
                 const Text(
                   '¿Seguro que quieres cancelar la recolección?',
                   style: TextStyle(
@@ -24,8 +23,6 @@ class ConfirmCancellation {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 15),
-
-                // Detalles de la recolección
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -47,8 +44,6 @@ class ConfirmCancellation {
                   ),
                 ),
                 const SizedBox(height: 20),
-
-                // Botones de confirmación
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
@@ -92,17 +87,15 @@ class ConfirmCancellation {
       final viewModel = HistorialViewModel(userId, filterBy);
       await viewModel.updatePickupStatus(pickupRequest, filterBy);
 
-      // Mostrar SnackBar con mensaje de éxito
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            filterBy == 'userId'
-                ? 'Recolección cancelada exitosamente'
-                : 'Recolección marcada como pendiente',
+      // ✅ Verificar que el contexto sigue montado
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Recolección cancelada exitosamente.'),
+            backgroundColor: Colors.green,
           ),
-          backgroundColor: Colors.green,
-        ),
-      );
+        );
+      }
     }
   }
 }

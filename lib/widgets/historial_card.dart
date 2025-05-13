@@ -1,29 +1,42 @@
 import 'package:ecoride/models/recoleccion_model.dart';
 import 'package:ecoride/services/historial_service.dart';
 import 'package:ecoride/viewmodels/notification_viewmodel.dart';
-import 'package:ecoride/views/incidente_screen.dart';
-import 'package:ecoride/widgets/cancelacion_modal.dart';
 import 'package:flutter/material.dart';
+import '../widgets/cancelacion_modal.dart';
 import '../widgets/detallesHistorial_modal.dart';
+import '../views/incidente_screen.dart';  // Importa el archivo del diálogo de incidencia
 
-class HistorialCard extends StatelessWidget {
+class HistorialCard extends StatefulWidget {
   final PickupRequest pickupRequest;
   final String filterBy;
   final HistorialService geoService;
-  final NotificationViewModel viewModel; // Aquí agregas el ViewModel
+  final NotificationViewModel viewModel;
 
   const HistorialCard({
     Key? key,
     required this.pickupRequest,
     required this.filterBy,
     required this.geoService,
-    required this.viewModel, // Recibiendo el ViewModel
+    required this.viewModel,
   }) : super(key: key);
+
+  @override
+  _HistorialCardState createState() => _HistorialCardState();
+}
+
+class _HistorialCardState extends State<HistorialCard> {
+  late PickupRequest _request;
+
+  @override
+  void initState() {
+    super.initState();
+    _request = widget.pickupRequest;
+  }
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => showDetailsModal(context, pickupRequest),
+      onTap: () => showDetailsModal(context, _request),
       child: Card(
         margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         child: Padding(
@@ -40,11 +53,11 @@ class HistorialCard extends StatelessWidget {
                       vertical: 5,
                     ),
                     decoration: BoxDecoration(
-                      color: _getStatusColor(pickupRequest.status),
+                      color: _getStatusColor(_request.status),
                       borderRadius: BorderRadius.circular(5),
                     ),
                     child: Text(
-                      pickupRequest.status,
+                      _request.status,
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -53,7 +66,7 @@ class HistorialCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    pickupRequest.time,
+                    _request.time,
                     style: const TextStyle(color: Colors.black54),
                   ),
                 ],
@@ -63,9 +76,9 @@ class HistorialCard extends StatelessWidget {
               // Información
               Expanded(
                 child: FutureBuilder<String>(
-                  future: geoService.getAddressFromCoordinates(
-                    pickupRequest.location.latitude,
-                    pickupRequest.location.longitude,
+                  future: widget.geoService.getAddressFromCoordinates(
+                    _request.location.latitude,
+                    _request.location.longitude,
                   ),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
@@ -77,7 +90,6 @@ class HistorialCard extends StatelessWidget {
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        /// Dirección
                         Text(
                           snapshot.data ?? 'Dirección no disponible',
                           style: const TextStyle(
@@ -86,15 +98,13 @@ class HistorialCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 10),
-
-                        /// Información adicional
                         Text(
-                          '${pickupRequest.quantity} bolsas - ${pickupRequest.wasteType}',
+                          '${_request.quantity} bolsas - ${_request.wasteType}',
                           style: const TextStyle(color: Colors.black54),
                         ),
                         const SizedBox(height: 5),
                         Text(
-                          pickupRequest.amount,
+                          _request.amount,
                           style: const TextStyle(
                             color: Colors.green,
                             fontWeight: FontWeight.bold,
@@ -102,10 +112,8 @@ class HistorialCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 15),
-
-                        /// ID de la Recolección (Firebase)
                         Text(
-                          "ID: ${pickupRequest.requestId}",
+                          "ID: ${_request.requestId}",
                           style: const TextStyle(
                             fontSize: 14,
                             color: Colors.grey,
@@ -132,67 +140,90 @@ class HistorialCard extends StatelessWidget {
                     if (value == 'Cancelar') {
                       await ConfirmCancellation.show(
                         context,
-                        pickupRequest,
-                        filterBy,
-                        pickupRequest.userId,
+                        _request,
+                        widget.filterBy,
+                        _request.userId,
                       );
-                    } else if (value == 'Finalizar') {
-                      // Lógica para finalizar
-                      await viewModel.sendWasteDisposedNotification(
-                        pickupRequest,
+                    } else if (value == 'Finalizar' &&
+                        !_request.pedidoDesechadoNotificado) {
+                      await widget.viewModel.sendWasteDisposedNotification(
+                        context,
+                        _request,
                       );
+
+                      // Actualización local del estado para reflejar el cambio
+                      setState(() {
+                        _request = _request.copyWith(
+                          pedidoDesechadoNotificado: true,
+                          status: "Finalizado",
+                        );
+                      });
+                    } else if (value == 'Notificar Llegada' &&
+                        !_request.recolectorLlegoNotificado) {
+                      await widget.viewModel.sendCollectorArrivalNotification(
+                        context,
+                        _request,
+                      );
+
+                      // Actualización local del estado para reflejar el cambio
+                      setState(() {
+                        _request = _request.copyWith(
+                          recolectorLlegoNotificado: true,
+                        );
+                      });
                     } else if (value == 'Reportar Incidencia') {
-                      // Navegación a ReportIncidentScreen
+                      // Mostrar el diálogo de reporte de incidencia
                       showDialog(
                         context: context,
-                        barrierDismissible: false,
-                        builder: (BuildContext context) {
-                          return ReportIncidentDialog(
-                            pickupRequest:
-                                pickupRequest, // Se envía el objeto completo
-                          );
+                        builder: (context) {
+                          return ReportIncidentDialog(pickupRequest: _request);
                         },
-                      );
-                    } else if (value == 'Notificar Llegada') {
-                      // Usamos el viewModel directamente
-                      await viewModel.sendCollectorArrivalNotification(
-                        pickupRequest,
                       );
                     }
                   },
                   itemBuilder: (context) {
-                    if (filterBy == 'userId') {
-                      return [
+                    List<PopupMenuEntry<String>> items = [];
+
+                    // Condicional para habilitar/deshabilitar el botón "Cancelar"
+                    if (widget.filterBy == 'userId' && _request.status == 'Pendiente') {
+                      items.add(
                         const PopupMenuItem(
                           value: 'Cancelar',
                           child: Text('❌​ Cancelar'),
                         ),
-                        const PopupMenuItem(
-                          value: 'Reportar Incidencia',
-                          child: Text('⚠️​ Reportar Incidencia'),
-                        ),
-                      ];
-                    } else if (filterBy == 'collectorId') {
-                      return [
-                        const PopupMenuItem(
-                          value: 'Finalizar',
-                          child: Text('✅​ Finalizar'),
-                        ),
-                        const PopupMenuItem(
-                          value: 'Notificar Llegada',
-                          child: Text('🔔​​ Notificar Llegada'),
-                        ),
+                      );
+                    } else if (widget.filterBy == 'collectorId' && _request.status == 'Recolección') {
+                      items.add(
                         const PopupMenuItem(
                           value: 'Cancelar',
                           child: Text('❌​ Cancelar'),
                         ),
-                        const PopupMenuItem(
-                          value: 'Reportar Incidencia',
-                          child: Text('⚠️​ Reportar Incidencia'),
-                        ),
-                      ];
+                      );
                     }
-                    return [];
+
+                    // Otras opciones
+                    if (widget.filterBy == 'userId') {
+                      items.add(const PopupMenuItem(
+                        value: 'Reportar Incidencia',
+                        child: Text('⚠️​ Reportar Incidencia'),
+                      ));
+                    } else if (widget.filterBy == 'collectorId') {
+                      items.add(PopupMenuItem(
+                        value: 'Finalizar',
+                        enabled: !_request.pedidoDesechadoNotificado,
+                        child: const Text('✅​ Finalizar'),
+                      ));
+                      items.add(PopupMenuItem(
+                        value: 'Notificar Llegada',
+                        enabled: !_request.recolectorLlegoNotificado,
+                        child: const Text('🔔​​ Notificar Llegada'),
+                      ));
+                      items.add(const PopupMenuItem(
+                        value: 'Reportar Incidencia',
+                        child: Text('⚠️​ Reportar Incidencia'),
+                      ));
+                    }
+                    return items;
                   },
                 ),
               ),

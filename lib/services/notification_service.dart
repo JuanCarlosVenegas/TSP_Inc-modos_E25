@@ -7,6 +7,7 @@ class NotificationService {
   // Función para guardar una notificación
   Future<void> saveNotification(NotificationModel notification) async {
     try {
+      print("📌 Guardando notificación en Firestore...");
       await _firebaseFirestore
           .collection('notifications')
           .add(notification.toJson());

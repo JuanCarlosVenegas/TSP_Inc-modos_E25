@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -13,31 +15,100 @@ import 'package:geocoding/geocoding.dart';
 class PendingRequestsViewModel extends ChangeNotifier {
   final PickupRequestService _service = PickupRequestService();
   final String collectorId;
-  final NotificationService _notificationService = NotificationService();
-
-  PendingRequestsViewModel({required this.collectorId});
+  GoogleMapController? _mapController;
+final NotificationService _notificationService = NotificationService();
+  PendingRequestsViewModel({required this.collectorId}) {
+    _listenToPendingRequests(); // 🔄 Escucha en tiempo real al inicializar
+  }
 
   List<PickupRequest> _pendingRequests = [];
   bool _isLoading = false;
   LatLng? _initialPosition;
-  GoogleMapController? _mapController;
-
+  
   List<PickupRequest> get pendingRequests => _pendingRequests;
   bool get isLoading => _isLoading;
   LatLng? get initialPosition => _initialPosition;
 
   String? _selectedRequestId;
   String? get selectedRequestId => _selectedRequestId;
+  StreamSubscription<QuerySnapshot>? _firestoreSubscription;
+  /// 🔄 **Actualización en tiempo real**
+  void _listenToPendingRequests() {
+    _isLoading = true;
+    notifyListeners();
+
+    _firestoreSubscription = FirebaseFirestore.instance
+        .collection('pickup_requests')
+        .where('status', isEqualTo: 'Pendiente')
+        .snapshots()
+        .listen((snapshot) async {
+      final currentPosition = await LocationService().getUserLocation();
+
+      if (currentPosition != null) {
+        _initialPosition = currentPosition;
+
+        _pendingRequests = snapshot.docs.map((doc) {
+          final data = doc.data();
+          final request = PickupRequest.fromJson(data);
+
+          // Calcula la distancia de la solicitud respecto al recolector
+          final distance = _calculateDistance(
+            currentPosition,
+            _parseLocation(request.location),
+          );
+
+          return request.copyWith(distance: distance);
+        }).toList();
+
+        // Ordena las solicitudes por distancia
+        _pendingRequests.sort((a, b) => a.distance!.compareTo(b.distance!));
+      }
+
+      _isLoading = false;
+      notifyListeners();
+    }, onError: (error) {
+      print("Error al escuchar cambios en Firestore: $error");
+      _isLoading = false;
+      notifyListeners();
+    });
+  }
+
+  // 🔴 **IMPORTANTE: Cancelar el listener al destruir el ViewModel**
+  @override
+  void dispose() {
+    _firestoreSubscription?.cancel(); 
+    super.dispose();
+  }
 
   void selectRequest(String requestId) {
     _selectedRequestId = requestId;
+
     final selected = _pendingRequests.firstWhere(
       (r) => r.requestId == requestId,
+      orElse: () {
+        print("⚠️ No se encontró el request con ID: $requestId");
+        return PickupRequest(
+        requestId: '',
+        userId: '',
+        location: GeoPoint(0, 0),
+        time: '',
+        amount: '',
+        wasteType: '',
+        quantity: 0,
+        size: '',
+        status: '',
+        createdAt: DateTime.now(),
+        imageUrls: [],
+      );
+      },
     );
-    _mapController?.animateCamera(
-      CameraUpdate.newLatLng(_parseLocation(selected.location)),
-    );
-    notifyListeners();
+
+    if (selected != null) {
+      _mapController?.animateCamera(
+        CameraUpdate.newLatLng(_parseLocation(selected.location)),
+      );
+      notifyListeners();
+    }
   }
 
   Set<Marker> get markers {
