@@ -4,7 +4,7 @@ import 'package:ecoride/viewmodels/notification_viewmodel.dart';
 import 'package:flutter/material.dart';
 import '../widgets/cancelacion_modal.dart';
 import '../widgets/detallesHistorial_modal.dart';
-import '../views/incidente_screen.dart';  // Importa el archivo del diálogo de incidencia
+import '../views/incidente_view.dart'; // Importa el archivo del diálogo de incidencia
 
 class HistorialCard extends StatefulWidget {
   final PickupRequest pickupRequest;
@@ -184,45 +184,60 @@ class _HistorialCardState extends State<HistorialCard> {
                   itemBuilder: (context) {
                     List<PopupMenuEntry<String>> items = [];
 
-                    // Condicional para habilitar/deshabilitar el botón "Cancelar"
-                    if (widget.filterBy == 'userId' && _request.status == 'Pendiente') {
+                    // Opción para 'userId'
+                    if (widget.filterBy == 'userId') {
                       items.add(
                         const PopupMenuItem(
-                          value: 'Cancelar',
-                          child: Text('❌​ Cancelar'),
+                          value: 'Reportar Incidencia',
+                          child: Text('⚠️​ Reportar Incidencia'),
                         ),
                       );
-                    } else if (widget.filterBy == 'collectorId' && _request.status == 'Recolección') {
-                      items.add(
-                        const PopupMenuItem(
-                          value: 'Cancelar',
-                          child: Text('❌​ Cancelar'),
-                        ),
-                      );
+
+                      // Verificar si está en estado "Pendiente" y agregar opción de "Cancelar"
+                      if (_request.status == 'Pendiente') {
+                        items.add(
+                          const PopupMenuItem(
+                            value: 'Cancelar',
+                            child: Text('❌​ Cancelar'),
+                          ),
+                        );
+                      }
                     }
 
-                    // Otras opciones
-                    if (widget.filterBy == 'userId') {
-                      items.add(const PopupMenuItem(
-                        value: 'Reportar Incidencia',
-                        child: Text('⚠️​ Reportar Incidencia'),
-                      ));
-                    } else if (widget.filterBy == 'collectorId') {
-                      items.add(PopupMenuItem(
-                        value: 'Finalizar',
-                        enabled: !_request.pedidoDesechadoNotificado,
-                        child: const Text('✅​ Finalizar'),
-                      ));
-                      items.add(PopupMenuItem(
-                        value: 'Notificar Llegada',
-                        enabled: !_request.recolectorLlegoNotificado,
-                        child: const Text('🔔​​ Notificar Llegada'),
-                      ));
-                      items.add(const PopupMenuItem(
-                        value: 'Reportar Incidencia',
-                        child: Text('⚠️​ Reportar Incidencia'),
-                      ));
+                    // Opciones para 'collectorId'
+                    if (widget.filterBy == 'collectorId') {
+                      items.add(
+                        PopupMenuItem(
+                          value: 'Finalizar',
+                          enabled: !_request.pedidoDesechadoNotificado,
+                          child: const Text('✅​ Finalizar'),
+                        ),
+                      );
+                      items.add(
+                        PopupMenuItem(
+                          value: 'Notificar Llegada',
+                          enabled: !_request.recolectorLlegoNotificado,
+                          child: const Text('🔔​​ Notificar Llegada'),
+                        ),
+                      );
+                      items.add(
+                        const PopupMenuItem(
+                          value: 'Reportar Incidencia',
+                          child: Text('⚠️​ Reportar Incidencia'),
+                        ),
+                      );
+
+                      // Verificar si está en estado "Recolección" y agregar opción de "Cancelar"
+                      if (_request.status == 'Recolección') {
+                        items.add(
+                          const PopupMenuItem(
+                            value: 'Cancelar',
+                            child: Text('❌​ Cancelar'),
+                          ),
+                        );
+                      }
                     }
+
                     return items;
                   },
                 ),

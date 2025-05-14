@@ -9,7 +9,7 @@ import '../models/notification_model.dart';
 import '../services/solicitud_service.dart';
 import '../services/location_service.dart';
 import '../services/notification_service.dart';
-import '../views/login_screen.dart';
+import '../views/login_view.dart';
 import 'package:geocoding/geocoding.dart';
 
 class PendingRequestsViewModel extends ChangeNotifier {

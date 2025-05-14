@@ -7,7 +7,7 @@ import '../models/recoleccion_model.dart';
 import '../models/notification_model.dart';
 import '../services/solicitud_service.dart';
 import '../services/notification_service.dart';
-import '../views/login_screen.dart';
+import '../views/login_view.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geocoding/geocoding.dart';
 

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../views/register_screen.dart';
+import '../views/register_view.dart';
 import '../repositories/login_repository.dart';
-import '../views/recolector_screen.dart';
-import '../views/generador_screen.dart';
+import '../views/recolector_view.dart';
+import '../views/generador_view.dart';
 
 class LoginViewModel extends ChangeNotifier {
   bool _isLoading = false;
