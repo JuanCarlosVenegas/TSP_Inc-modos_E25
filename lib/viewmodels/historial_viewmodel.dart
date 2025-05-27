@@ -56,9 +56,9 @@ class HistorialViewModel {
     }
 
     try {
-      print('➡️ Intentando actualizar el estado...');
-      print('🔍 ID del documento: ${pickupRequest.requestId}');
-      print('🔍 Nuevo estado: $newStatus');
+      // print('➡️ Intentando actualizar el estado...');
+      // print('🔍 ID del documento: ${pickupRequest.requestId}');
+      // print('🔍 Nuevo estado: $newStatus');
 
       // ✅ Verificación de existencia
       DocumentSnapshot doc =

@@ -11,10 +11,10 @@ class HistorialScreen extends StatefulWidget {
   final String filterBy;
 
   const HistorialScreen({
-    Key? key,
+    super.key,
     required this.userId,
     required this.filterBy,
-  }) : super(key: key);
+  });
 
   @override
   _HistorialScreenState createState() => _HistorialScreenState();
@@ -191,7 +191,7 @@ void _confirmCancellation(BuildContext context, PickupRequest pickupRequest) asy
                       geoService: _geoService,
                       viewModel: _notificationVM,
                     );
-                  }).toList(),
+                  }),
                 ],
               );
             },

@@ -1,10 +1,14 @@
 import 'package:ecoride/models/recoleccion_model.dart';
+import 'package:ecoride/services/calificacion_service.dart';
 import 'package:ecoride/services/historial_service.dart';
 import 'package:ecoride/viewmodels/notification_viewmodel.dart';
 import 'package:flutter/material.dart';
 import '../widgets/cancelacion_modal.dart';
 import '../widgets/detallesHistorial_modal.dart';
-import '../views/incidente_view.dart'; // Importa el archivo del diálogo de incidencia
+import '../widgets/calificacion_formulario.dart';
+import '../views/incidente_screen.dart'; // Importa el archivo del diálogo de incidencia
+import '../services/user_service.dart';
+import 'package:intl/intl.dart';
 
 class HistorialCard extends StatefulWidget {
   final PickupRequest pickupRequest;
@@ -13,12 +17,12 @@ class HistorialCard extends StatefulWidget {
   final NotificationViewModel viewModel;
 
   const HistorialCard({
-    Key? key,
+    super.key,
     required this.pickupRequest,
     required this.filterBy,
     required this.geoService,
     required this.viewModel,
-  }) : super(key: key);
+  });
 
   @override
   _HistorialCardState createState() => _HistorialCardState();
@@ -26,11 +30,15 @@ class HistorialCard extends StatefulWidget {
 
 class _HistorialCardState extends State<HistorialCard> {
   late PickupRequest _request;
+  late UserService _userService;
+  late RatingService _califService;
 
   @override
   void initState() {
     super.initState();
     _request = widget.pickupRequest;
+    _userService = UserService();
+    _califService = RatingService();
   }
 
   @override
@@ -179,6 +187,59 @@ class _HistorialCardState extends State<HistorialCard> {
                           return ReportIncidentDialog(pickupRequest: _request);
                         },
                       );
+                    } else if (value == 'Calificar') {
+                      String nameToShow = 'Desconocido';
+                      String actualUserId = 'Desconocido';
+                      String calificadoId = 'Desconocido';
+
+                      if (widget.filterBy == 'userId') {
+                        nameToShow =
+                            await _userService.getUserNameById(
+                              _request.collectorId ?? 'amer',
+                            ) ??
+                            'Usuario';
+                        actualUserId = _request.userId;
+                        calificadoId = _request.collectorId ?? 'no asignado';
+                      } else {
+                        nameToShow =
+                            await _userService.getUserNameById(
+                              _request.userId,
+                            ) ??
+                            'Usuario';
+                        actualUserId = _request.collectorId ?? 'no asignado';
+                        calificadoId = _request.userId;
+                      }
+
+                      final alreadyRated = await _califService.hasUserRated(
+                        _request.requestId,
+                        actualUserId,
+                      );
+
+                      if (alreadyRated) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Ya has calificado este servicio.'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        return;
+                      }
+
+                      // Mostrar el formulario de calificación
+                      showRatingDialog(
+                        context: context,
+                        collectorName: nameToShow,
+                        requestId: _request.requestId,
+                        wasteSummary:
+                            '${_request.quantity} bolsas - ${_request.wasteType}',
+                        date: DateFormat(
+                          'dd/MM/yyyy',
+                        ).format(_request.createdAt),
+                        time: _request.time,
+                        amount: _request.amount,
+                        fromUserId: actualUserId,
+                        toUserId: calificadoId,
+                      );
                     }
                   },
                   itemBuilder: (context) {
@@ -199,6 +260,15 @@ class _HistorialCardState extends State<HistorialCard> {
                           const PopupMenuItem(
                             value: 'Cancelar',
                             child: Text('❌​ Cancelar'),
+                          ),
+                        );
+                      }
+
+                      if (_request.status == 'Finalizado') {
+                        items.add(
+                          const PopupMenuItem(
+                            value: 'Calificar',
+                            child: Text('⭐ Calificar Servicio'),
                           ),
                         );
                       }
@@ -233,6 +303,15 @@ class _HistorialCardState extends State<HistorialCard> {
                           const PopupMenuItem(
                             value: 'Cancelar',
                             child: Text('❌​ Cancelar'),
+                          ),
+                        );
+                      }
+
+                      if (_request.status == 'Finalizado') {
+                        items.add(
+                          const PopupMenuItem(
+                            value: 'Calificar',
+                            child: Text('⭐ Calificar Servicio'),
                           ),
                         );
                       }

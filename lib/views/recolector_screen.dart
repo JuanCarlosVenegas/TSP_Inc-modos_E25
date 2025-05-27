@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../viewmodels/recolector_viewmodel.dart';
 import '../widgets/solicitudes_recoleccion.dart';
-import 'historial_view.dart';
+import 'historial_screen.dart';
 
 class PendingRequestsScreen extends StatefulWidget {
   final String collectorId;

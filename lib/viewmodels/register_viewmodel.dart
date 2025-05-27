@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../repositories/register_repository.dart'; // Asegúrate de importar el RegisterRepository
 import '../models/user_model.dart';
-import '../views/recolector_view.dart';
-import '../views/generador_view.dart';
+import '../views/recolector_screen.dart';
+import '../views/generador_screen.dart';
 
 class RegisterViewModel extends ChangeNotifier {
   bool _isLoading = false;

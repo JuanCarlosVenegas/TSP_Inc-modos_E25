@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../views/notification_view.dart';
+import '../views/notification_screen.dart';
 
 class NotificationIconWithBadge extends StatelessWidget {
   final String userId;

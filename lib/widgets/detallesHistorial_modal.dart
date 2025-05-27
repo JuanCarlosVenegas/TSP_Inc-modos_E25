@@ -87,7 +87,7 @@ void showDetailsModal(BuildContext context, PickupRequest pickupRequest) {
                     if (pickupRequest.imageUrls.isNotEmpty)
                       Column(
                         children: [
-                          Container(
+                          SizedBox(
                             height: 250,
                             child: ValueListenableBuilder<int>(
                               valueListenable: currentImageIndex,

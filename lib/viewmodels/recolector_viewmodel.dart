@@ -9,7 +9,7 @@ import '../models/notification_model.dart';
 import '../services/solicitud_service.dart';
 import '../services/location_service.dart';
 import '../services/notification_service.dart';
-import '../views/login_view.dart';
+import '../views/login_screen.dart';
 import 'package:geocoding/geocoding.dart';
 
 class PendingRequestsViewModel extends ChangeNotifier {
@@ -103,13 +103,11 @@ final NotificationService _notificationService = NotificationService();
       },
     );
 
-    if (selected != null) {
-      _mapController?.animateCamera(
-        CameraUpdate.newLatLng(_parseLocation(selected.location)),
-      );
-      notifyListeners();
+    _mapController?.animateCamera(
+      CameraUpdate.newLatLng(_parseLocation(selected.location)),
+    );
+    notifyListeners();
     }
-  }
 
   Set<Marker> get markers {
     return _pendingRequests.map((req) {
@@ -327,8 +325,9 @@ final NotificationService _notificationService = NotificationService();
         if (place.thoroughfare != null) address += place.thoroughfare!;
         if (place.name != null) address += '${place.name!}, ';
         if (place.subLocality != null) address += '${place.subLocality!}, ';
-        if (place.administrativeArea != null)
+        if (place.administrativeArea != null) {
           address += '${place.administrativeArea!}, ';
+        }
         if (place.country != null) address += place.country!;
 
         return address;
@@ -350,9 +349,9 @@ final NotificationService _notificationService = NotificationService();
     String message;
     if (tipo == 'recolector_llego') {
       message =
-          "El recolector de tu pedido solicitado a las ${hora} ha llegado a tu dirección de recolección\n ¡Sal a darle tus desechos!";
+          "El recolector de tu pedido solicitado a las $hora ha llegado a tu dirección de recolección\n ¡Sal a darle tus desechos!";
     } else if (tipo == 'basura_desechada') {
-      message = "Su pedido ${requestId} ha sido desechado correctamente";
+      message = "Su pedido $requestId ha sido desechado correctamente";
     } else {
       message = "Notificación de recolección de basura.";
     }

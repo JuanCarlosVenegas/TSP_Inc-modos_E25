@@ -70,9 +70,9 @@ class NotificationViewModel extends ChangeNotifier {
     String message;
     if (tipo == 'recolector_llego') {
       message =
-          "El recolector de tu pedido solicitado a las ${hora} ha llegado a tu dirección de recolección\n ¡Sal a darle tus desechos!";
+          "El recolector de tu pedido solicitado a las $hora ha llegado a tu dirección de recolección\n ¡Sal a darle tus desechos!";
     } else if (tipo == 'basura_desechada') {
-      message = "Su pedido ${requestId} ha sido desechado correctamente";
+      message = "Su pedido $requestId ha sido desechado correctamente";
     } else {
       message = "Notificación de recolección de basura.";
     }
