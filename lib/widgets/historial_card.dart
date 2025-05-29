@@ -2,10 +2,11 @@ import 'package:ecoride/models/recoleccion_model.dart';
 import 'package:ecoride/services/calificacion_service.dart';
 import 'package:ecoride/services/historial_service.dart';
 import 'package:ecoride/viewmodels/notification_viewmodel.dart';
+import 'package:ecoride/views/chat_screen.dart';
 import 'package:flutter/material.dart';
 import '../widgets/cancelacion_modal.dart';
 import '../widgets/detallesHistorial_modal.dart';
-import '../widgets/calificacion_formulario.dart';
+import '../views/calificacion_screen.dart';
 import '../views/incidente_screen.dart'; // Importa el archivo del diálogo de incidencia
 import '../services/user_service.dart';
 import 'package:intl/intl.dart';
@@ -120,13 +121,47 @@ class _HistorialCardState extends State<HistorialCard> {
                           ),
                         ),
                         const SizedBox(height: 15),
-                        Text(
-                          "ID: ${_request.requestId}",
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey,
-                          ),
-                          overflow: TextOverflow.ellipsis,
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "ID: ${_request.requestId}",
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            TextButton(
+                              style: TextButton.styleFrom(
+                                backgroundColor: const Color.fromARGB(255, 119, 119, 119),
+                                foregroundColor: Colors.white,
+                              ),
+                              onPressed: () {
+                                final currentUserId =
+                                    widget.filterBy == 'userId'
+                                        ? _request.userId
+                                        : _request.collectorId ?? '';
+                                final otherUserId =
+                                    widget.filterBy == 'userId'
+                                        ? _request.collectorId ?? ''
+                                        : _request.userId;
+
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder:
+                                        (_) => ChatScreen(
+                                          currentUserId: currentUserId,
+                                          otherUserId: otherUserId,
+                                          requestId: _request.requestId,
+                                        ),
+                                  ),
+                                );
+                              },
+                              child: const Text("Mensajes"),
+                            ),
+                          ],
                         ),
                       ],
                     );

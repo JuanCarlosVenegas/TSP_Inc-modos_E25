@@ -113,4 +113,23 @@ class PickupRequestService {
 
     await docRef.update({'status': status, 'collectorId': collectorId});
   }
+
+  Future<PickupRequest?> getPickupRequestById(String requestId) async {
+    final CollectionReference _pickupRequestsCollection =
+      FirebaseFirestore.instance.collection('pickup_requests');
+    try {
+      final docSnapshot = await _pickupRequestsCollection.doc(requestId).get();
+
+      if (docSnapshot.exists) {
+        return PickupRequest.fromJson(
+          docSnapshot.data() as Map<String, dynamic>,
+        );
+      } else {
+        return null;
+      }
+    } catch (e) {
+      print('Error al obtener la solicitud: $e');
+      return null;
+    }
+  }
 }

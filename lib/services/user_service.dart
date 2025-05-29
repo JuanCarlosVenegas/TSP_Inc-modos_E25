@@ -16,4 +16,19 @@ class UserService {
     }
     return null;
   }
+
+  Future<String?> getUserRoleById(String userId) async {
+    try {
+      final DocumentSnapshot userDoc =
+          await _firestore.collection('users').doc(userId).get();
+
+      if (userDoc.exists) {
+        final isCollector = userDoc['isCollector'] ?? false;
+        return isCollector ? 'recolector' : 'generador';
+      }
+    } catch (e) {
+      print('Error al obtener el rol del usuario: $e');
+    }
+    return null;
+  }
 }
