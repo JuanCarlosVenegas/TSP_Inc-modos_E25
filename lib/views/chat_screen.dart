@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:ecoride/models/chat_model.dart';
 import 'package:ecoride/services/chat_service.dart';
 import 'package:ecoride/services/user_service.dart';
-// Asegúrate de tener este servicio
 
 class ChatScreen extends StatefulWidget {
   final String currentUserId;
@@ -37,12 +36,23 @@ class _ChatScreenState extends State<ChatScreen> {
   void initState() {
     super.initState();
     _loadData();
+    _markMessagesAsRead(); // <- nueva función
+  }
+
+  void _markMessagesAsRead() {
+    _chatService.markMessagesAsRead(
+      widget.currentUserId,
+      widget.otherUserId,
+      widget.requestId,
+    );
   }
 
   Future<void> _loadData() async {
     final name = await _userService.getUserNameById(widget.otherUserId);
     final role = await _userService.getUserRoleById(widget.otherUserId);
-    final request = await _pickupRequestService.getPickupRequestById(widget.requestId);
+    final request = await _pickupRequestService.getPickupRequestById(
+      widget.requestId,
+    );
 
     setState(() {
       _otherUserName = name;
@@ -60,14 +70,10 @@ class _ChatScreenState extends State<ChatScreen> {
       receiverId: widget.otherUserId,
       message: _controller.text.trim(),
       timestamp: DateTime.now(),
-      isRead: false
+      isRead: false,
     );
 
-    _chatService.sendMessage(
-      senderId: widget.currentUserId,
-      receiverId: widget.otherUserId,
-      message: message.message,
-    );
+    _chatService.sendMessage(requestId: widget.requestId, message: message);
 
     _controller.clear();
   }
@@ -75,9 +81,7 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     final bool canSendMessages = _pickupRequest?.status == "Recolección";
@@ -100,34 +104,41 @@ class _ChatScreenState extends State<ChatScreen> {
       body: Column(
         children: [
           Container(
-            color: Colors.green[100],
+            color: const Color.fromARGB(255, 59, 194, 64),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             child: Row(
               children: [
-                const CircleAvatar(radius: 20, backgroundColor: Colors.grey),
+                const CircleAvatar(
+                  radius: 20,
+                  backgroundColor: Colors.grey,
+                  child: Icon(Icons.person, color: Colors.white),
+                ),
                 const SizedBox(width: 10),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       _otherUserName ?? '',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
                     Text(
                       _otherUserRole == null
                           ? ''
                           : 'Chat con el $_otherUserRole',
-                      style: const TextStyle(fontSize: 12, color: Colors.black54),
+                      style: const TextStyle(fontSize: 12, color: Colors.white),
                     ),
                   ],
                 ),
               ],
             ),
           ),
+
           Expanded(
             child: StreamBuilder<List<ChatMessage>>(
-              stream: _chatService.getMessages(
-                  widget.currentUserId, widget.otherUserId),
+              stream: _chatService.getMessages(widget.requestId),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator());
@@ -146,9 +157,13 @@ class _ChatScreenState extends State<ChatScreen> {
                           isMe ? Alignment.centerRight : Alignment.centerLeft,
                       child: Container(
                         margin: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 6),
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 10),
+                          horizontal: 14,
+                          vertical: 10,
+                        ),
                         decoration: BoxDecoration(
                           color: isMe ? Colors.green[400] : Colors.grey[400],
                           borderRadius: BorderRadius.circular(12),
@@ -164,21 +179,29 @@ class _ChatScreenState extends State<ChatScreen> {
               },
             ),
           ),
+
           if (!canSendMessages)
             const Padding(
               padding: EdgeInsets.all(12.0),
               child: Text(
                 "El chat solo está disponible durante la recolección.",
-                style: TextStyle(color: Colors.red, fontStyle: FontStyle.italic),
+                style: TextStyle(
+                  color: Colors.red,
+                  fontStyle: FontStyle.italic,
+                ),
               ),
             ),
+
           Padding(
             padding: const EdgeInsets.all(10.0),
             child: Row(
               children: [
                 Expanded(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       border: Border.all(color: Colors.grey.shade400),
                       borderRadius: BorderRadius.circular(24),

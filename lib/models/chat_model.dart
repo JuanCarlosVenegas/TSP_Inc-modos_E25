@@ -5,7 +5,7 @@ class ChatMessage {
   final String receiverId;
   final String message;
   final DateTime timestamp;
-  final bool isRead; // Nuevo campo
+  final bool isRead;
 
   ChatMessage({
     required this.senderId,
@@ -15,16 +15,6 @@ class ChatMessage {
     required this.isRead,
   });
 
-  Map<String, dynamic> toMap() {
-    return {
-      'senderId': senderId,
-      'receiverId': receiverId,
-      'message': message,
-      'timestamp': timestamp,
-      'isRead': isRead, // nuevo
-    };
-  }
-
   factory ChatMessage.fromMap(Map<String, dynamic> map) {
     return ChatMessage(
       senderId: map['senderId'],
@@ -33,5 +23,15 @@ class ChatMessage {
       timestamp: (map['timestamp'] as Timestamp).toDate(),
       isRead: map['isRead'] ?? false,
     );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'senderId': senderId,
+      'receiverId': receiverId,
+      'message': message,
+      'timestamp': timestamp,
+      'isRead': isRead,
+    };
   }
 }

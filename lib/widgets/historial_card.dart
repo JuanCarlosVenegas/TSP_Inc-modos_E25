@@ -1,5 +1,6 @@
 import 'package:ecoride/models/recoleccion_model.dart';
 import 'package:ecoride/services/calificacion_service.dart';
+import 'package:ecoride/services/chat_service.dart';
 import 'package:ecoride/services/historial_service.dart';
 import 'package:ecoride/viewmodels/notification_viewmodel.dart';
 import 'package:ecoride/views/chat_screen.dart';
@@ -134,8 +135,18 @@ class _HistorialCardState extends State<HistorialCard> {
                             ),
                             TextButton(
                               style: TextButton.styleFrom(
-                                backgroundColor: const Color.fromARGB(255, 119, 119, 119),
+                                backgroundColor: const Color.fromARGB(
+                                  255,
+                                  161,
+                                  156,
+                                  156,
+                                ),
                                 foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    4,
+                                  ), // Más cuadrado
+                                ),
                               ),
                               onPressed: () {
                                 final currentUserId =
@@ -157,9 +168,53 @@ class _HistorialCardState extends State<HistorialCard> {
                                           requestId: _request.requestId,
                                         ),
                                   ),
-                                );
+                                ).then((_) {
+                                  // Al volver del chat, actualizamos el estado para recargar los mensajes no leídos
+                                  setState(() {});
+                                });
                               },
-                              child: const Text("Mensajes"),
+
+                              child: Stack(
+                                clipBehavior: Clip.none,
+                                children: [
+                                  const Text("Mensajes"),
+                                  FutureBuilder<int>(
+                                    future: ChatService()
+                                        .getUnreadMessagesCount(
+                                          widget.filterBy == 'userId'
+                                              ? _request.userId
+                                              : _request.collectorId ?? '',
+                                          widget.filterBy == 'userId'
+                                              ? _request.collectorId ?? ''
+                                              : _request.userId,
+                                          _request.requestId,
+                                        ),
+                                    builder: (context, snapshot) {
+                                      final count = snapshot.data ?? 0;
+                                      if (count == 0) return const SizedBox();
+
+                                      return Positioned(
+                                        top: -6,
+                                        right: -16,
+                                        child: Container(
+                                          padding: const EdgeInsets.all(4),
+                                          decoration: BoxDecoration(
+                                            color: Colors.red,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Text(
+                                            count > 9 ? '9+' : '$count',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 10,
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
                         ),

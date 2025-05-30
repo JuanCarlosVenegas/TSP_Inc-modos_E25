@@ -39,7 +39,7 @@ class ConfirmCancellation {
                         ),
                       ),
                       const SizedBox(height: 5),
-                      Text("💲 ${pickupRequest.amount}"),
+                      Text("${pickupRequest.amount}"),
                     ],
                   ),
                 ),
