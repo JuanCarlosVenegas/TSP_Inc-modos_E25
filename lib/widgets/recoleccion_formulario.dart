@@ -1,3 +1,4 @@
+import 'package:ecoride/widgets/confirmacionpedido_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_multi_formatter/flutter_multi_formatter.dart';
 import '../viewmodels/generador_viewmodel.dart';
@@ -12,7 +13,10 @@ class MainRequestForm extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("Solicitar recolección", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        const Text(
+          "Solicitar recolección",
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        ),
         const SizedBox(height: 10),
         TextField(
           controller: viewModel.locationController,
@@ -29,17 +33,24 @@ class MainRequestForm extends StatelessWidget {
                   TimeOfDay? selectedTime = await showTimePicker(
                     context: context,
                     initialTime: TimeOfDay.now(),
-                    builder: (context, child) => Theme(
-                      data: ThemeData.light().copyWith(
-                        primaryColor: Colors.green,
-                        colorScheme: const ColorScheme.light(primary: Colors.green),
-                        buttonTheme: const ButtonThemeData(textTheme: ButtonTextTheme.primary),
-                      ),
-                      child: child!,
-                    ),
+                    builder:
+                        (context, child) => Theme(
+                          data: ThemeData.light().copyWith(
+                            primaryColor: Colors.green,
+                            colorScheme: const ColorScheme.light(
+                              primary: Colors.green,
+                            ),
+                            buttonTheme: const ButtonThemeData(
+                              textTheme: ButtonTextTheme.primary,
+                            ),
+                          ),
+                          child: child!,
+                        ),
                   );
                   if (selectedTime != null) {
-                    viewModel.timeController.text = selectedTime.format(context);
+                    viewModel.timeController.text = selectedTime.format(
+                      context,
+                    );
                     viewModel.notifyListeners();
                   }
                 },
@@ -58,7 +69,9 @@ class MainRequestForm extends StatelessWidget {
               child: TextField(
                 controller: viewModel.amountController,
                 decoration: _inputDecoration("Monto"),
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 inputFormatters: [
                   MoneyInputFormatter(
                     leadingSymbol: '\$',
@@ -75,13 +88,32 @@ class MainRequestForm extends StatelessWidget {
         ElevatedButton(
           onPressed: () => viewModel.toggleWasteForm(true),
           style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-          child: const SizedBox(width: double.infinity, child: Center(child: Text("Agregar detalles"))),
+          child: const SizedBox(
+            width: double.infinity,
+            child: Center(child: Text("Agregar detalles")),
+          ),
         ),
         const SizedBox(height: 5),
         ElevatedButton(
-          onPressed: viewModel.confirmRequest,
+          onPressed: () {
+            if (viewModel.validateRequest()) {
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder:
+                    (_) => ConfirmRequestDialog(
+                      viewModel: viewModel,
+                      onConfirm: () => viewModel.confirmRequest(context),
+                    ),
+              );
+            }
+            // Si no pasa validación, se mostrará el error automáticamente por _showError
+          },
           style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-          child: const SizedBox(width: double.infinity, child: Center(child: Text("Confirmar"))),
+          child: const SizedBox(
+            width: double.infinity,
+            child: Center(child: Text("Confirmar")),
+          ),
         ),
       ],
     );

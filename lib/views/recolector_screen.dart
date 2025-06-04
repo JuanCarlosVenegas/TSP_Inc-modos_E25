@@ -1,3 +1,4 @@
+import 'package:ecoride/widgets/cerrarsesion_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -20,9 +21,12 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => PendingRequestsViewModel(collectorId: widget.collectorId)
-        ..loadPendingRequests(),
-      child: Consumer<PendingRequestsViewModel>( // Usamos Consumer para acceder al vm
+      create:
+          (_) =>
+              PendingRequestsViewModel(collectorId: widget.collectorId)
+                ..loadPendingRequests(),
+      child: Consumer<PendingRequestsViewModel>(
+        // Usamos Consumer para acceder al vm
         builder: (context, vm, _) {
           return Scaffold(
             appBar: AppBar(
@@ -38,9 +42,14 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
             body: IndexedStack(
               index: _selectedIndex,
               children: [
-                HistorialScreen(userId: widget.collectorId, filterBy: 'collectorId'),
+                HistorialScreen(
+                  userId: widget.collectorId,
+                  filterBy: 'collectorId',
+                ),
                 // Aquí iría el contenido de PendingRequests
-                PendingRequestsContent(viewModel: vm), // Usamos el vm para mostrar el contenido
+                PendingRequestsContent(
+                  viewModel: vm,
+                ), // Usamos el vm para mostrar el contenido
                 const Center(child: Text('Cerrando sesión...')),
               ],
             ),
@@ -65,7 +74,13 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
               ],
               onTap: (index) {
                 if (index == 2) {
-                  vm.logout(context); // Llamada al logout desde el viewModel
+                  showDialog(
+                    context: context,
+                    builder:
+                        (context) => LogoutConfirmationDialog(
+                          onConfirm: () => vm.logout(context),
+                        ),
+                  );
                 } else {
                   setState(() {
                     _selectedIndex = index;

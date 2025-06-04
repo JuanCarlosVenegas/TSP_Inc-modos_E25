@@ -3,7 +3,12 @@ import '../models/recoleccion_model.dart';
 import '../viewmodels/historial_viewmodel.dart';
 
 class ConfirmCancellation {
-  static Future<void> show(BuildContext context, PickupRequest pickupRequest, String filterBy, String userId) async {
+  static Future<void> show(
+    BuildContext context,
+    PickupRequest pickupRequest,
+    String filterBy,
+    String userId, 
+  ) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
@@ -39,7 +44,7 @@ class ConfirmCancellation {
                         ),
                       ),
                       const SizedBox(height: 5),
-                      Text("${pickupRequest.amount}"),
+                      Text(pickupRequest.amount),
                     ],
                   ),
                 ),
@@ -83,11 +88,9 @@ class ConfirmCancellation {
     );
 
     if (confirm == true) {
-      // ✅ Crear una instancia del ViewModel con los parámetros necesarios
       final viewModel = HistorialViewModel(userId, filterBy);
       await viewModel.updatePickupStatus(pickupRequest, filterBy);
 
-      // ✅ Verificar que el contexto sigue montado
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

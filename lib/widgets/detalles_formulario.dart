@@ -8,10 +8,52 @@ class WasteDetailsForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Mostrar el modal si está subiendo una imagen
+    if (viewModel.isUploading) {
+      Future.microtask(() {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (_) => AlertDialog(
+            backgroundColor: Colors.green.shade50,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.green.shade700),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  "Cargando...",
+                  style: TextStyle(
+                    color: Colors.green.shade900,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        );
+      });
+    } else {
+      // Cierra el modal si ya no está subiendo
+      Future.microtask(() {
+        if (Navigator.canPop(context)) {
+          Navigator.of(context).pop();
+        }
+      });
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("Detalles de la basura", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        const Text(
+          "Detalles de la basura",
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        ),
         const SizedBox(height: 10),
         Row(
           children: [
@@ -44,7 +86,12 @@ class WasteDetailsForm extends StatelessWidget {
                     padding: EdgeInsets.zero,
                   ),
                   Expanded(
-                    child: Center(child: Text(viewModel.quantityController.text, style: const TextStyle(fontSize: 16))),
+                    child: Center(
+                      child: Text(
+                        viewModel.quantityController.text,
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    ),
                   ),
                   IconButton(
                     icon: const Icon(Icons.add, size: 20),
@@ -100,7 +147,12 @@ class WasteDetailsForm extends StatelessWidget {
                 .map(
                   (file) => ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child: Image.file(file, width: 80, height: 80, fit: BoxFit.cover),
+                    child: Image.file(
+                      file,
+                      width: 80,
+                      height: 80,
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 )
                 .toList(),
@@ -110,7 +162,10 @@ class WasteDetailsForm extends StatelessWidget {
         ElevatedButton(
           onPressed: () => viewModel.toggleWasteForm(false),
           style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-          child: const SizedBox(width: double.infinity, child: Center(child: Text("Continuar"))),
+          child: const SizedBox(
+            width: double.infinity,
+            child: Center(child: Text("Continuar")),
+          ),
         ),
       ],
     );

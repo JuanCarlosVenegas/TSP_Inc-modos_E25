@@ -115,10 +115,10 @@ class PickupRequestService {
   }
 
   Future<PickupRequest?> getPickupRequestById(String requestId) async {
-    final CollectionReference _pickupRequestsCollection =
+    final CollectionReference pickupRequestsCollection =
       FirebaseFirestore.instance.collection('pickup_requests');
     try {
-      final docSnapshot = await _pickupRequestsCollection.doc(requestId).get();
+      final docSnapshot = await pickupRequestsCollection.doc(requestId).get();
 
       if (docSnapshot.exists) {
         return PickupRequest.fromJson(

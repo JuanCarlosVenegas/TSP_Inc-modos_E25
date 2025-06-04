@@ -1,22 +1,21 @@
 import 'package:ecoride/models/recoleccion_model.dart';
-import 'package:ecoride/services/calificacion_service.dart';
+import 'package:ecoride/viewmodels/calificacion_viewmodel.dart';
 import 'package:ecoride/services/chat_service.dart';
 import 'package:ecoride/services/historial_service.dart';
+import 'package:ecoride/viewmodels/historial_viewmodel.dart';
 import 'package:ecoride/viewmodels/notification_viewmodel.dart';
-import 'package:ecoride/views/chat_screen.dart';
 import 'package:flutter/material.dart';
-import '../widgets/cancelacion_modal.dart';
+import '../views/cancelacion_screen.dart';
 import '../widgets/detallesHistorial_modal.dart';
-import '../views/calificacion_screen.dart';
-import '../views/incidente_screen.dart'; // Importa el archivo del diálogo de incidencia
+import '../views/incidente_screen.dart'; // Diálogo de incidencia
 import '../services/user_service.dart';
-import 'package:intl/intl.dart';
 
 class HistorialCard extends StatefulWidget {
   final PickupRequest pickupRequest;
   final String filterBy;
   final HistorialService geoService;
   final NotificationViewModel viewModel;
+  final HistorialViewModel historialViewModel;
 
   const HistorialCard({
     super.key,
@@ -24,6 +23,7 @@ class HistorialCard extends StatefulWidget {
     required this.filterBy,
     required this.geoService,
     required this.viewModel,
+    required this.historialViewModel,
   });
 
   @override
@@ -33,14 +33,14 @@ class HistorialCard extends StatefulWidget {
 class _HistorialCardState extends State<HistorialCard> {
   late PickupRequest _request;
   late UserService _userService;
-  late RatingService _califService;
+  late RatingViewModel _califService;
 
   @override
   void initState() {
     super.initState();
     _request = widget.pickupRequest;
     _userService = UserService();
-    _califService = RatingService();
+    _califService = RatingViewModel();
   }
 
   @override
@@ -94,7 +94,7 @@ class _HistorialCardState extends State<HistorialCard> {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Text("Cargando dirección...");
                     }
-                    if (snapshot.hasError) {
+                    if (snapshot.hasError || !snapshot.hasData) {
                       return const Text("Dirección no disponible");
                     }
                     return Column(
@@ -143,52 +143,31 @@ class _HistorialCardState extends State<HistorialCard> {
                                 ),
                                 foregroundColor: Colors.white,
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    4,
-                                  ), // Más cuadrado
+                                  borderRadius: BorderRadius.circular(4),
                                 ),
                               ),
                               onPressed: () {
-                                final currentUserId =
-                                    widget.filterBy == 'userId'
-                                        ? _request.userId
-                                        : _request.collectorId ?? '';
-                                final otherUserId =
-                                    widget.filterBy == 'userId'
-                                        ? _request.collectorId ?? ''
-                                        : _request.userId;
-
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder:
-                                        (_) => ChatScreen(
-                                          currentUserId: currentUserId,
-                                          otherUserId: otherUserId,
-                                          requestId: _request.requestId,
-                                        ),
-                                  ),
-                                ).then((_) {
-                                  // Al volver del chat, actualizamos el estado para recargar los mensajes no leídos
-                                  setState(() {});
-                                });
+                                widget.historialViewModel.navigateToChat(
+                                  context: context,
+                                  request: _request,
+                                  filterBy: widget.filterBy,
+                                  refresh: () => setState(() {}),
+                                );
                               },
-
                               child: Stack(
                                 clipBehavior: Clip.none,
                                 children: [
                                   const Text("Mensajes"),
                                   FutureBuilder<int>(
-                                    future: ChatService()
-                                        .getUnreadMessagesCount(
-                                          widget.filterBy == 'userId'
-                                              ? _request.userId
-                                              : _request.collectorId ?? '',
-                                          widget.filterBy == 'userId'
-                                              ? _request.collectorId ?? ''
-                                              : _request.userId,
-                                          _request.requestId,
-                                        ),
+                                    future: ChatService().getUnreadMessagesCount(
+                                      widget.filterBy == 'userId'
+                                          ? _request.userId
+                                          : (_request.collectorId ?? ''),
+                                      widget.filterBy == 'userId'
+                                          ? (_request.collectorId ?? '')
+                                          : _request.userId,
+                                      _request.requestId,
+                                    ),
                                     builder: (context, snapshot) {
                                       final count = snapshot.data ?? 0;
                                       if (count == 0) return const SizedBox();
@@ -198,7 +177,7 @@ class _HistorialCardState extends State<HistorialCard> {
                                         right: -16,
                                         child: Container(
                                           padding: const EdgeInsets.all(4),
-                                          decoration: BoxDecoration(
+                                          decoration: const BoxDecoration(
                                             color: Colors.red,
                                             shape: BoxShape.circle,
                                           ),
@@ -249,7 +228,6 @@ class _HistorialCardState extends State<HistorialCard> {
                         _request,
                       );
 
-                      // Actualización local del estado para reflejar el cambio
                       setState(() {
                         _request = _request.copyWith(
                           pedidoDesechadoNotificado: true,
@@ -263,79 +241,28 @@ class _HistorialCardState extends State<HistorialCard> {
                         _request,
                       );
 
-                      // Actualización local del estado para reflejar el cambio
                       setState(() {
                         _request = _request.copyWith(
                           recolectorLlegoNotificado: true,
                         );
                       });
                     } else if (value == 'Reportar Incidencia') {
-                      // Mostrar el diálogo de reporte de incidencia
                       showDialog(
                         context: context,
-                        builder: (context) {
-                          return ReportIncidentDialog(pickupRequest: _request);
-                        },
+                        builder: (context) =>
+                            ReportIncidentDialog(pickupRequest: _request),
                       );
                     } else if (value == 'Calificar') {
-                      String nameToShow = 'Desconocido';
-                      String actualUserId = 'Desconocido';
-                      String calificadoId = 'Desconocido';
-
-                      if (widget.filterBy == 'userId') {
-                        nameToShow =
-                            await _userService.getUserNameById(
-                              _request.collectorId ?? 'amer',
-                            ) ??
-                            'Usuario';
-                        actualUserId = _request.userId;
-                        calificadoId = _request.collectorId ?? 'no asignado';
-                      } else {
-                        nameToShow =
-                            await _userService.getUserNameById(
-                              _request.userId,
-                            ) ??
-                            'Usuario';
-                        actualUserId = _request.collectorId ?? 'no asignado';
-                        calificadoId = _request.userId;
-                      }
-
-                      final alreadyRated = await _califService.hasUserRated(
-                        _request.requestId,
-                        actualUserId,
-                      );
-
-                      if (alreadyRated) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Ya has calificado este servicio.'),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
-                        return;
-                      }
-
-                      // Mostrar el formulario de calificación
-                      showRatingDialog(
+                      await widget.historialViewModel.calificarRecoleccion(
                         context: context,
-                        collectorName: nameToShow,
-                        requestId: _request.requestId,
-                        wasteSummary:
-                            '${_request.quantity} bolsas - ${_request.wasteType}',
-                        date: DateFormat(
-                          'dd/MM/yyyy',
-                        ).format(_request.createdAt),
-                        time: _request.time,
-                        amount: _request.amount,
-                        fromUserId: actualUserId,
-                        toUserId: calificadoId,
+                        filterBy: widget.filterBy,
+                        request: _request,
                       );
                     }
                   },
                   itemBuilder: (context) {
-                    List<PopupMenuEntry<String>> items = [];
+                    final items = <PopupMenuEntry<String>>[];
 
-                    // Opción para 'userId'
                     if (widget.filterBy == 'userId') {
                       items.add(
                         const PopupMenuItem(
@@ -344,7 +271,6 @@ class _HistorialCardState extends State<HistorialCard> {
                         ),
                       );
 
-                      // Verificar si está en estado "Pendiente" y agregar opción de "Cancelar"
                       if (_request.status == 'Pendiente') {
                         items.add(
                           const PopupMenuItem(
@@ -364,7 +290,6 @@ class _HistorialCardState extends State<HistorialCard> {
                       }
                     }
 
-                    // Opciones para 'collectorId'
                     if (widget.filterBy == 'collectorId') {
                       items.add(
                         PopupMenuItem(
@@ -387,7 +312,6 @@ class _HistorialCardState extends State<HistorialCard> {
                         ),
                       );
 
-                      // Verificar si está en estado "Recolección" y agregar opción de "Cancelar"
                       if (_request.status == 'Recolección') {
                         items.add(
                           const PopupMenuItem(

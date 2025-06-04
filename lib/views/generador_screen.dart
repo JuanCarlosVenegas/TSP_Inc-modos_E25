@@ -1,4 +1,5 @@
 import 'package:ecoride/views/historial_screen.dart';
+import 'package:ecoride/widgets/cerrarsesion_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -41,7 +42,10 @@ class _RequestPickupScreenState extends State<RequestPickupScreen> {
             body: IndexedStack(
               index: _selectedIndex,
               children: [
-                HistorialScreen(userId: widget.userId, filterBy: 'userId'), // Pantalla de Historial
+                HistorialScreen(
+                  userId: widget.userId,
+                  filterBy: 'userId',
+                ), // Pantalla de Historial
                 // Pantalla principal de Ride
                 Column(
                   children: [
@@ -84,12 +88,19 @@ class _RequestPickupScreenState extends State<RequestPickupScreen> {
                 const Center(child: Text('Cerrando sesión...')),
               ],
             ),
+
             bottomNavigationBar: BottomNavigationBar(
               currentIndex: _selectedIndex,
               selectedItemColor: Colors.green,
               onTap: (index) {
                 if (index == 2) {
-                  vm.logout(context);
+                  showDialog(
+                    context: context,
+                    builder:
+                        (context) => LogoutConfirmationDialog(
+                          onConfirm: () => vm.logout(context),
+                        ),
+                  );
                 } else {
                   setState(() {
                     _selectedIndex = index;

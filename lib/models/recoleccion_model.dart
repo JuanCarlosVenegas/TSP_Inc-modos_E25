@@ -13,7 +13,7 @@ class PickupRequest {
   final DateTime createdAt;
   String? collectorId;
   final List<String> imageUrls;
-  
+
   // ✅ Nuevos atributos para manejar notificaciones enviadas
   bool recolectorLlegoNotificado;
   bool pedidoDesechadoNotificado;
@@ -53,8 +53,10 @@ class PickupRequest {
       'createdAt': Timestamp.fromDate(createdAt),
       'collectorId': collectorId,
       'imageUrls': imageUrls,
-      'recolectorLlegoNotificado': recolectorLlegoNotificado, // 🔄 Se añade al JSON
-      'pedidoDesechadoNotificado': pedidoDesechadoNotificado // 🔄 Se añade al JSON
+      'recolectorLlegoNotificado':
+          recolectorLlegoNotificado, // 🔄 Se añade al JSON
+      'pedidoDesechadoNotificado':
+          pedidoDesechadoNotificado, // 🔄 Se añade al JSON
     };
   }
 
@@ -62,9 +64,8 @@ class PickupRequest {
     return PickupRequest(
       requestId: json['requestId'],
       userId: json['userId'],
-      location: json['location'] is GeoPoint
-          ? json['location']
-          : GeoPoint(0, 0),
+      location:
+          json['location'] is GeoPoint ? json['location'] : GeoPoint(0, 0),
       time: json['time'],
       amount: json['amount'],
       wasteType: json['wasteType'],
@@ -74,8 +75,12 @@ class PickupRequest {
       createdAt: (json['createdAt'] as Timestamp).toDate(),
       collectorId: json['collectorId'],
       imageUrls: List<String>.from(json['imageUrls'] ?? []),
-      recolectorLlegoNotificado: json['recolectorLlegoNotificado'] ?? false, // 🔄 Trae el valor o false por defecto
-      pedidoDesechadoNotificado: json['pedidoDesechadoNotificado'] ?? false, // 🔄 Trae el valor o false por defecto
+      recolectorLlegoNotificado:
+          json['recolectorLlegoNotificado'] ??
+          false, // 🔄 Trae el valor o false por defecto
+      pedidoDesechadoNotificado:
+          json['pedidoDesechadoNotificado'] ??
+          false, // 🔄 Trae el valor o false por defecto
     );
   }
 
@@ -111,8 +116,15 @@ class PickupRequest {
       collectorId: collectorId ?? this.collectorId,
       imageUrls: imageUrls ?? this.imageUrls,
       distance: distance ?? this.distance,
-      recolectorLlegoNotificado: recolectorLlegoNotificado ?? this.recolectorLlegoNotificado,
-      pedidoDesechadoNotificado: pedidoDesechadoNotificado ?? this.pedidoDesechadoNotificado,
+      recolectorLlegoNotificado:
+          recolectorLlegoNotificado ?? this.recolectorLlegoNotificado,
+      pedidoDesechadoNotificado:
+          pedidoDesechadoNotificado ?? this.pedidoDesechadoNotificado,
     );
+  }
+
+  factory PickupRequest.fromSnapshot(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return PickupRequest.fromJson(data);
   }
 }

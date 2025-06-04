@@ -12,8 +12,6 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geocoding/geocoding.dart';
 
 class PickupRequestViewModel extends ChangeNotifier {
-
-
   //Desactiva el boton de regresar que viene por defecto en la parte superior "<-".
   @override
   Widget build(BuildContext context) {
@@ -28,13 +26,14 @@ class PickupRequestViewModel extends ChangeNotifier {
     );
   }
 
-
   final String userId;
   final PickupRequestService _service = PickupRequestService();
   final NotificationService _notificationService = NotificationService();
 
   bool _isDisposed = false;
   final locationFocusNode = FocusNode();
+  bool _isUploading = false;
+  bool get isUploading => _isUploading;
 
   PickupRequestViewModel({required this.userId}) {
     _initLocation();
@@ -156,18 +155,33 @@ class PickupRequestViewModel extends ChangeNotifier {
 
   Future<void> pickImage() async {
     if (_isPickingImage) return;
-    _isPickingImage = true;
-    final picker = ImagePicker();
-    final XFile? file = await picker.pickImage(source: ImageSource.gallery);
 
-    if (file != null) {
-      selectedImages.add(File(file.path));
-      _safeNotify();
+    _isPickingImage = true;
+    setUploading(true);
+
+    try {
+      final picker = ImagePicker();
+      final XFile? file = await picker.pickImage(source: ImageSource.gallery);
+
+      if (file != null) {
+        selectedImages.add(File(file.path));
+        _safeNotify();
+      }
+    } catch (e) {
+      // Aquí podrías manejar errores si lo deseas
+      debugPrint('Error al seleccionar imagen: $e');
+    } finally {
+      _isPickingImage = false;
+      setUploading(false);
     }
-    _isPickingImage = false;
   }
 
-  Future<void> confirmRequest() async {
+  void setUploading(bool value) {
+    _isUploading = value;
+    notifyListeners();
+  }
+
+  Future<void> confirmRequest(BuildContext context) async {
     if (currentPosition == null) {
       _showError("Ubicación no disponible.");
       return;
@@ -182,7 +196,6 @@ class PickupRequestViewModel extends ChangeNotifier {
       return;
     }
 
-    // Remueve símbolos y verifica que el valor numérico sea mayor que 0
     final cleanAmount = amountText.replaceAll(RegExp(r'[^\d.]'), '');
     final parsedAmount = double.tryParse(cleanAmount) ?? 0;
 
@@ -206,16 +219,61 @@ class PickupRequestViewModel extends ChangeNotifier {
       imageUrls: [],
     );
 
+    // Mostrar el modal de carga
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder:
+          (_) => WillPopScope(
+            onWillPop: () async => false,
+            child: const AlertDialog(
+              content: SizedBox(
+                height: 80,
+                child: Center(
+                  child: CircularProgressIndicator(color: Colors.green),
+                ),
+              ),
+            ),
+          ),
+    );
+
     try {
       await _service.saveRequest(request, selectedImages, currentPosition!);
       resetForm();
 
-      // También puedes mostrar un mensaje de éxito si quieres
+      Navigator.of(context).pop(); // Cierra el modal
+
       _showSuccess("¡Solicitud enviada con éxito!");
     } catch (e) {
-    //  print("Error al confirmar la solicitud: $e");
+      Navigator.of(context).pop(); // Cierra el modal si hubo error
       _showError("Hubo un error al guardar la solicitud.");
     }
+  }
+
+  bool validateRequest() {
+    if (currentPosition == null) {
+      _showError("Ubicación no disponible.");
+      return false;
+    }
+
+    final locationText = locationController.text.trim();
+    final timeText = timeController.text.trim();
+    final amountText = amountController.text.trim();
+
+    if (locationText.isEmpty || timeText.isEmpty || amountText.isEmpty) {
+      _showError("Por favor, completa todos los campos obligatorios.");
+      return false;
+    }
+
+    final cleanAmount = amountText.replaceAll(RegExp(r'[^\d.]'), '');
+    final parsedAmount = double.tryParse(cleanAmount) ?? 0;
+
+    if (parsedAmount <= 0) {
+      _showError("El monto debe ser mayor a \$0.00");
+      return false;
+    }
+
+    return true;
   }
 
   void _showError(String message) {
@@ -231,6 +289,7 @@ class PickupRequestViewModel extends ChangeNotifier {
     locationController.clear();
     timeController.clear();
     amountController.clear();
+    selectedImages.clear();
     notifyListeners();
   }
 

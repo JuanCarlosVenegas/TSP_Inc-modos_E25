@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
-import '../models/calificacion_model.dart';
-import '../services/calificacion_service.dart';
+import 'package:intl/intl.dart';
+
+import '../models/recoleccion_model.dart';
+import '../viewmodels/calificacion_viewmodel.dart';
 
 void showRatingDialog({
   required BuildContext context,
   required String collectorName,
-  required String requestId,
-  required String wasteSummary,
-  required String date,
-  required String time,
-  required String amount,
+  required PickupRequest request,
   required String fromUserId,
   required String toUserId,
 }) {
   final TextEditingController commentController = TextEditingController();
   double rating = 0;
-  final ratingService = RatingService();
+  final ratingService = RatingViewModel();
+  final dateFormat = DateFormat('dd/MM/yyyy');
+  final ratingViewModel = RatingViewModel();
 
   showDialog(
     context: context,
@@ -43,11 +43,22 @@ void showRatingDialog({
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Pedido: $requestId', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    Text(
+                      'Pedido: ${request.requestId}',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
                     const SizedBox(height: 4),
-                    Text(wasteSummary),
-                    Text('$date   $time'),
-                    Text(amount, style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
+                    Text('${request.quantity} bolsas - ${request.wasteType}'),
+                    Text(
+                      '${dateFormat.format(request.createdAt)}   ${request.time}',
+                    ),
+                    Text(
+                      request.amount,
+                      style: const TextStyle(
+                        color: Colors.green,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -59,7 +70,8 @@ void showRatingDialog({
                 allowHalfRating: false,
                 itemCount: 5,
                 itemSize: 40,
-                itemBuilder: (context, _) => const Icon(Icons.star, color: Colors.amber),
+                itemBuilder:
+                    (context, _) => const Icon(Icons.star, color: Colors.amber),
                 onRatingUpdate: (value) {
                   rating = value;
                 },
@@ -112,26 +124,14 @@ void showRatingDialog({
                     foregroundColor: Colors.white,
                   ),
                   onPressed: () async {
-                    if (commentController.text.trim().isEmpty || rating == 0) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Por favor escribe un comentario y selecciona una calificación.")),
-                      );
-                      return;
-                    }
-
-                    final newRating = RatingModel(
-                      requestId: requestId,
+                    await ratingViewModel.enviarCalificacion(
+                      context: context,
+                      requestId: request.requestId,
                       fromUserId: fromUserId,
                       toUserId: toUserId,
                       stars: rating,
-                      comment: commentController.text.trim(),
-                      timestamp: DateTime.now(),
-                    );
-
-                    await ratingService.submitRating(newRating);
-                    Navigator.of(context).pop();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Gracias por tu calificación.")),
+                      comment: commentController.text,
+                      onSuccess: () => Navigator.of(context).pop(),
                     );
                   },
                   child: const Text('Enviar'),
